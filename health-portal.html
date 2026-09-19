@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Health Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light;
+  --pri:#4f7ef8; --pri-dark:#3a6aee; --sec:#10b981; --warn:#f59e0b; --danger:#ef4444; --purple:#8b5cf6;
+  --bg:#f8fafc; --sb-bg:#1e293b; --sb-txt:#94a3b8; --card:#ffffff; --border:#e2e8f0;
+  --txt:#1e293b; --muted:#64748b; --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sb{width:220px;min-width:220px;background:var(--sb-bg);display:flex;flex-direction:column;padding:24px 0;overflow-y:auto}
+.sb-logo{padding:0 20px 24px;font-size:15px;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:10px}
+.sb-logo span{font-size:22px}
+.sb-sec{font-size:10px;font-weight:600;letter-spacing:.08em;color:#475569;padding:16px 20px 6px;text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--sb-txt);font-size:13.5px;font-weight:500;transition:all .15s;border-left:3px solid transparent}
+.nav:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+.nav.active{color:#f8fafc;background:rgba(79,126,248,.15);border-left-color:var(--pri)}
+.nav .ic{font-size:16px;width:20px;text-align:center}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:28px}
+.page{display:none}.page.active{display:block}
+.ph{margin-bottom:24px}.ph h1{font-size:22px;font-weight:700}
+.ph p{color:var(--muted);font-size:14px;margin-top:4px}
+
+/* Cards */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.ct{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+
+/* Grid */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+
+/* Stat cards */
+.sc{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.sl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.sv{font-size:28px;font-weight:700;line-height:1;margin:6px 0 2px}
+.su{font-size:13px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:8px}
+.bg{background:#dcfce7;color:#16a34a}.br{background:#fee2e2;color:#dc2626}
+.by{background:#fef3c7;color:#d97706}.bb{background:#dbeafe;color:#2563eb}
+
+/* Forms */
+.fr{display:grid;gap:14px;margin-bottom:16px}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select,.fg textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--txt);background:#fff;transition:border-color .15s;font-family:inherit}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--pri)}
+.fg textarea{resize:vertical;min-height:70px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.bp{background:var(--pri);color:#fff}.bp:hover{background:var(--pri-dark)}
+.bs{background:var(--bg);color:var(--txt);border:1.5px solid var(--border)}.bs:hover{background:var(--border)}
+.bd{background:#fee2e2;color:var(--danger)}.bd:hover{background:#fecaca}
+
+/* Table */
+.dt{width:100%;border-collapse:collapse;font-size:13.5px}
+.dt th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)}
+.dt td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:#f8fafc}
+.delbtn{cursor:pointer;color:#cbd5e1;font-size:14px;transition:color .15s;background:none;border:none}
+.delbtn:hover{color:var(--danger)}
+
+/* Tabs */
+.tabbar{display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:10px;padding:4px;width:fit-content}
+.tabbtn{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s;font-family:inherit}
+.tabbtn.active{background:#fff;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.1);font-weight:600}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+.tbl{background:#dbeafe;color:#1d4ed8}.tgr{background:#dcfce7;color:#15803d}
+.tyw{background:#fef3c7;color:#b45309}.trd{background:#fee2e2;color:#b91c1c}
+.tpu{background:#ede9fe;color:#7c3aed}.tgy{background:#f1f5f9;color:#475569}
+
+/* Longevity */
+.frow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.frow:last-child{border-bottom:none}
+.fico{font-size:20px;width:32px;text-align:center}
+.finfo{flex:1}
+.fname{font-size:13.5px;font-weight:600}
+.fdesc{font-size:12px;color:var(--muted);margin-top:2px}
+.fbarw{width:120px}
+.fbarbg{background:var(--border);border-radius:4px;height:6px;overflow:hidden}
+.fbarfill{height:100%;border-radius:4px;transition:width .5s}
+.fscore{font-size:13px;font-weight:700;width:36px;text-align:right}
+
+/* Misc */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .ei{font-size:36px;margin-bottom:12px}
+.empty p{font-size:14px}
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.pavatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4f7ef8,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700}
+
+@media(max-width:900px){.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.sb{display:none}.g4,.g2,.g3{grid-template-columns:1fr}}
+/* ── PRINT STYLES ─────────────────────────────────────────── */
+.print-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;background:#4f7ef8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.print-btn:hover{background:#3a6aee}
+.print-btn.sec{background:#8b5cf6}.print-btn.sec:hover{background:#7c3aed}
+@media print{
+  .sb,.print-btn,.no-print{display:none!important}
+  body{display:block!important;height:auto!important;overflow:visible!important;background:#fff!important}
+  .main{overflow:visible!important;padding:20px!important;height:auto!important;width:100%!important}
+  .page{display:none!important}
+  .page.active{display:block!important}
+  .card{box-shadow:none!important;border:1px solid #e2e8f0!important;break-inside:avoid;margin-bottom:12px!important}
+  .g2,.g3,.g4{display:grid!important}
+  canvas{max-width:100%!important}
+  h1,h2,h3{break-after:avoid}
+  tr{break-inside:avoid}
+  .ph p{display:block!important}
+  table{font-size:11px!important}
+  th,td{padding:4px 6px!important}
+  .dna-sec{display:block!important}
+  @page{margin:15mm 12mm;size:A4}
+}</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-logo"><span>🏥</span> HealthPortal</div>
+  <div class="sb-sec">Overview</div>
+  <div class="nav active" onclick="showPage('dashboard')"><span class="ic">📊</span> Dashboard</div>
+  <div class="sb-sec">Tracking</div>
+  <!-- Weight nav hidden until wearable connected -->
+  <!-- Exercise nav hidden until wearable connected -->
+  <!-- Sleep nav hidden until wearable connected -->
+  <div class="sb-sec">Health Records</div>
+  <div class="nav" onclick="showPage('medical')"><span class="ic">🩺</span> Medical Records</div>
+  <div class="nav" onclick="showPage('longevity')"><span class="ic">✨</span> Longevity Score</div>
+  <div class="sb-sec">Analysis</div>
+  <div class="nav" onclick="showPage('fullreport')"><span class="ic">📋</span> Full Report</div>
+  <div class="nav" onclick="showPage('labanalysis')"><span class="ic">🔬</span> Lab Analysis</div>
+  <div class="nav" onclick="showPage('dnaanalysis')"><span class="ic">🧬</span> DNA & Genetics</div>
+  <div class="sb-sec">Settings</div>
+  <div class="nav" onclick="showPage('profile')"><span class="ic">👤</span> Profile</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="ph"><h1 id="dash-greeting">Good morning 👋</h1><p>Your health overview at a glance.</p></div>
+  <div class="g4" id="dash-stats"></div>
+  <div class="g2">
+    <div class="card"><div class="ct">Cholesterol Trend</div><div style="position:relative;height:220px"><canvas id="dCChart"></canvas></div></div>
+    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;text-align:center;background:#f8fafc;border:2px dashed var(--border)"><div style="font-size:36px;margin-bottom:12px">⌚</div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Wearable Not Connected</div><div style="color:var(--muted);font-size:13px">Weight, sleep and exercise tracking will be enabled once you connect a wearable device or fitness tracker.</div></div>
+  </div>
+</div>
+
+<!-- WEIGHT -->
+<div id="page-weight" class="page">
+  <div class="ph"><h1>⚖️ Weight & BMI</h1><p>Track your weight and body mass index over time.</p></div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Log Weight</div>
+      <div class="fr c2"><div class="fg"><label>Date</label><input type="date" id="w-date"></div><div class="fg"><label>Weight</label><input type="number" id="w-val" placeholder="70" step="0.1"></div></div>
+      <div class="fr c2" style="margin-bottom:16px"><div class="fg"><label>Unit</label><select id="w-unit"><option value="kg">kg</option><option value="lbs">lbs</option></select></div><div class="fg"><label>Notes</label><input type="text" id="w-notes" placeholder="Optional"></div></div>
+      <button class="btn bp" onclick="addWeight()">➕ Log Weight</button>
+      <div id="bmi-box" style="display:none">
+        <div class="divider" style="margin:14px 0"></div>
+        <div class="ct">BMI Result</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:8px">
+          <div style="font-size:32px;font-weight:800" id="bmi-val">—</div>
+          <div><div id="bmi-cat" class="tag tbl" style="margin-bottom:6px">—</div><div style="font-size:12px;color:var(--muted)">Based on your profile height</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="ct">Weight Trend</div><div style="position:relative;height:220px"><canvas id="wChart"></canvas></div></div>
+  </div>
+  <div class="card"><div class="ct">History</div><div id="w-table"></div></div>
+</div>
+
+<!-- EXERCISE -->
+<div id="page-exercise" class="page">
+  <div class="ph"><h1>🏃 Exercise & Activity</h1><p>Log workouts and track your activity levels.</p></div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Log Workout</div>
+      <div class="fr c2"><div class="fg"><label>Date</label><input type="date" id="ex-date"></div><div class="fg"><label>Type</label><select id="ex-type"><option>Running</option><option>Walking</option><option>Cycling</option><option>Swimming</option><option>Weight Training</option><option>Yoga</option><option>HIIT</option><option>Sports</option><option>Other</option></select></div></div>
+      <div class="fr c3"><div class="fg"><label>Duration (min)</label><input type="number" id="ex-dur" placeholder="45"></div><div class="fg"><label>Calories Burned</label><input type="number" id="ex-cal" placeholder="300"></div><div class="fg"><label>Intensity</label><select id="ex-int"><option>Low</option><option>Moderate</option><option>High</option></select></div></div>
+      <div class="fr" style="margin-bottom:16px"><div class="fg"><label>Notes</label><input type="text" id="ex-notes" placeholder="e.g. 5km run, felt strong"></div></div>
+      <button class="btn bp" onclick="addExercise()">➕ Log Workout</button>
+    </div>
+    <div class="card"><div class="ct">Weekly Activity (minutes)</div><div style="position:relative;height:220px"><canvas id="exWChart"></canvas></div></div>
+  </div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card"><div class="ct">Exercise Type Breakdown</div><div style="position:relative;height:200px"><canvas id="exTChart"></canvas></div></div>
+    <div class="card"><div class="ct">This Month</div><div id="ex-month"></div></div>
+  </div>
+  <div class="card"><div class="ct">Workout Log</div><div id="ex-table"></div></div>
+</div>
+
+<!-- SLEEP -->
+<div id="page-sleep" class="page">
+  <div class="ph"><h1>🌙 Sleep</h1><p>Monitor your sleep patterns and quality.</p></div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Log Sleep</div>
+      <div class="fr c2"><div class="fg"><label>Date (night of)</label><input type="date" id="sl-date"></div><div class="fg"><label>Hours Slept</label><input type="number" id="sl-hrs" placeholder="7.5" step="0.5"></div></div>
+      <div class="fr c2" style="margin-bottom:16px"><div class="fg"><label>Quality (1–5)</label><select id="sl-q"><option value="5">⭐⭐⭐⭐⭐ Excellent</option><option value="4">⭐⭐⭐⭐ Good</option><option value="3" selected>⭐⭐⭐ Fair</option><option value="2">⭐⭐ Poor</option><option value="1">⭐ Very Poor</option></select></div><div class="fg"><label>Notes</label><input type="text" id="sl-notes" placeholder="Woke up once, etc."></div></div>
+      <button class="btn bp" onclick="addSleep()">➕ Log Sleep</button>
+    </div>
+    <div class="card"><div class="ct">Sleep Duration (14 days)</div><div style="position:relative;height:220px"><canvas id="slChart"></canvas></div></div>
+  </div>
+  <div class="g3" id="sl-stats" style="margin-bottom:20px"></div>
+  <div class="card"><div class="ct">Sleep Log</div><div id="sl-table"></div></div>
+</div>
+
+<!-- MEDICAL -->
+<div id="page-medical" class="page">
+  <div class="ph"><h1>🩺 Medical Records</h1><p>Conditions, medications, appointments, and lab results.</p></div>
+  <div class="tabbar">
+    <button class="tabbtn active" onclick="medTab('conditions',this)">Conditions</button>
+    <button class="tabbtn" onclick="medTab('medications',this)">Medications</button>
+    <button class="tabbtn" onclick="medTab('appointments',this)">Appointments</button>
+    <button class="tabbtn" onclick="medTab('labs',this)">Lab Results</button>
+    <button class="tabbtn" onclick="medTab('illness',this)">🤒 Illness Log</button>
+  </div>
+  <!-- Conditions -->
+  <div id="med-conditions" class="med-sec">
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">Add Condition</div>
+        <div class="fr c2"><div class="fg"><label>Condition</label><input type="text" id="cond-name" placeholder="e.g. Type 2 Diabetes"></div><div class="fg"><label>Status</label><select id="cond-status"><option>Active</option><option>Managed</option><option>Resolved</option><option>Monitoring</option></select></div></div>
+        <div class="fr c2"><div class="fg"><label>Diagnosed Date</label><input type="date" id="cond-date"></div><div class="fg"><label>Doctor</label><input type="text" id="cond-doc" placeholder="Dr. Smith"></div></div>
+        <div class="fr" style="margin-bottom:16px"><div class="fg"><label>Notes</label><textarea id="cond-notes" placeholder="Additional details..."></textarea></div></div>
+        <button class="btn bp" onclick="addCondition()">➕ Add Condition</button>
+      </div>
+      <div class="card"><div class="ct">Conditions List</div><div id="cond-list"></div></div>
+    </div>
+  </div>
+  <!-- Medications -->
+  <div id="med-medications" class="med-sec" style="display:none">
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">Add Medication</div>
+        <div class="fr c2"><div class="fg"><label>Medication</label><input type="text" id="med-name" placeholder="e.g. Metformin"></div><div class="fg"><label>Dosage</label><input type="text" id="med-dose" placeholder="500mg"></div></div>
+        <div class="fr c2"><div class="fg"><label>Frequency</label><select id="med-freq"><option>Once daily</option><option>Twice daily</option><option>Three times daily</option><option>As needed</option><option>Weekly</option></select></div><div class="fg"><label>Start Date</label><input type="date" id="med-start"></div></div>
+        <div class="fr" style="margin-bottom:16px"><div class="fg"><label>Purpose / Notes</label><input type="text" id="med-notes" placeholder="For blood sugar control"></div></div>
+        <button class="btn bp" onclick="addMedication()">➕ Add Medication</button>
+      </div>
+      <div class="card"><div class="ct">Current Medications</div><div id="med-list"></div></div>
+    </div>
+  </div>
+  <!-- Appointments -->
+  <div id="med-appointments" class="med-sec" style="display:none">
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">Add Appointment</div>
+        <div class="fr c2"><div class="fg"><label>Date</label><input type="date" id="appt-date"></div><div class="fg"><label>Time</label><input type="time" id="appt-time"></div></div>
+        <div class="fr c2"><div class="fg"><label>Doctor</label><input type="text" id="appt-doc" placeholder="Dr. Johnson"></div><div class="fg"><label>Type</label><select id="appt-type"><option>General Checkup</option><option>Specialist</option><option>Dental</option><option>Eye Exam</option><option>Lab Work</option><option>Follow-up</option><option>Other</option></select></div></div>
+        <div class="fr" style="margin-bottom:16px"><div class="fg"><label>Notes</label><input type="text" id="appt-notes" placeholder="Reason for visit"></div></div>
+        <button class="btn bp" onclick="addAppointment()">➕ Add Appointment</button>
+      </div>
+      <div class="card"><div class="ct">Appointments</div><div id="appt-list"></div></div>
+    </div>
+  </div>
+  <!-- Labs -->
+  <div id="med-labs" class="med-sec" style="display:none">
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">Add Lab Result</div>
+        <div class="fr c2"><div class="fg"><label>Date</label><input type="date" id="lab-date"></div><div class="fg"><label>Test Name</label><input type="text" id="lab-test" placeholder="e.g. HbA1c"></div></div>
+        <div class="fr c3"><div class="fg"><label>Value</label><input type="text" id="lab-val" placeholder="5.6"></div><div class="fg"><label>Unit</label><input type="text" id="lab-unit" placeholder="%"></div><div class="fg"><label>Status</label><select id="lab-status"><option>Normal</option><option>Borderline</option><option>Abnormal</option></select></div></div>
+        <div class="fr" style="margin-bottom:16px"><div class="fg"><label>Notes</label><input type="text" id="lab-notes" placeholder="Reference range, comments..."></div></div>
+        <button class="btn bp" onclick="addLab()">➕ Add Lab Result</button>
+      </div>
+      <div class="card"><div class="ct">Lab History</div><div id="lab-list"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LONGEVITY -->
+<div id="page-longevity" class="page">
+  <div class="ph"><h1>✨ Longevity Score</h1><p>An overall health score based on your tracked metrics.</p></div>
+  <div class="g3" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Overall Health Score</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0">
+        <canvas id="scoreRing" width="140" height="140"></canvas>
+        <div style="margin-top:14px;text-align:center">
+          <div style="font-size:40px;font-weight:800" id="score-num">—</div>
+          <div id="score-grade" class="tag tbl" style="margin:8px auto;width:fit-content">Calculating…</div>
+          <div style="font-size:13px;color:var(--muted)">out of 100</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="grid-column:span 2"><div class="ct">Score Breakdown</div><div id="long-factors"></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ct">Recommendations</div><div id="long-recs"></div></div>
+    <div class="card"><div class="ct">Score History</div><div style="position:relative;height:200px"><canvas id="scoreHistChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="page-profile" class="page">
+  <div class="ph"><h1>👤 Profile</h1><p>Personal details used for BMI and health calculations.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div class="pavatar" id="p-avatar">P</div>
+        <div><div style="font-size:18px;font-weight:700" id="p-name-disp">Your Name</div><div style="font-size:13px;color:var(--muted)" id="p-age-disp">Set your profile below</div></div>
+      </div>
+      <div class="fr c2"><div class="fg"><label>First Name</label><input type="text" id="p-name" placeholder="Pablo"></div><div class="fg"><label>Date of Birth</label><input type="date" id="p-dob"></div></div>
+      <div class="fr c2"><div class="fg"><label>Gender</label><select id="p-gender"><option value="">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div><div class="fg"><label>Height</label><div style="display:flex;gap:8px"><input type="number" id="p-height" placeholder="175" style="flex:1"><select id="p-hunit" style="width:70px"><option value="cm">cm</option><option value="in">in</option></select></div></div></div>
+      <div class="fr c2" style="margin-bottom:20px"><div class="fg"><label>Target Weight</label><div style="display:flex;gap:8px"><input type="number" id="p-tw" placeholder="70" style="flex:1"><select id="p-wunit" style="width:70px"><option value="kg">kg</option><option value="lbs">lbs</option></select></div></div><div class="fg"><label>Daily Calorie Goal</label><input type="number" id="p-calgoal" placeholder="2000"></div></div>
+      <button class="btn bp" onclick="saveProfile()">💾 Save Profile</button>
+    </div>
+    <div class="card">
+      <div class="ct">Data Management</div>
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px">All data is stored locally in your browser. Export for backup or clear to start fresh.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn bs" onclick="exportData()">📤 Export All Data (JSON)</button>
+        <button class="btn bd" onclick="clearAll()">🗑️ Clear All Data</button>
+      </div>
+      <div class="divider"></div>
+      <div class="ct">Storage Summary</div>
+      <div id="storage-info" style="font-size:13.5px;color:var(--muted);margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL REPORT -->
+<div id="page-fullreport" class="page">
+  <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1>📋 Full Health Report — Pablo</h1>
+      <p>Complete lab results, genetic profile, and integrated conclusions. All data from your uploaded files.</p>
+    </div>
+    <button class="print-btn no-print" onclick="printFullReport()">⬇️ Export PDF</button>
+  </div>
+
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 18px;margin-bottom:24px;font-size:13px;color:#78350f">
+    ⚠️ <strong>Disclaimer:</strong> This analysis is informational only and is not a medical diagnosis. Consult your doctor before acting on any findings, especially regarding supplementation, medication, or lifestyle changes.
+  </div>
+
+  <!-- ═══ SECTION 1: EXECUTIVE SUMMARY ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:var(--pri);border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">1. Executive Summary</h2>
+  </div>
+  <div class="g4" style="margin-bottom:28px">
+    <div class="sc" style="border-top:3px solid #ef4444">
+      <div style="font-size:20px;margin-bottom:8px">🚨</div>
+      <div class="sl">Needs Attention — Jun 2026</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong style="color:#dc2626">🦠 Borrelia IgM 30.28 POSITIVE</strong> — lab: "suspected active infection". <strong>LDL 4.13</strong> (May 2026 all-time high), <strong>hsCRP 4.2</strong> (CV risk zone)</div>
+    </div>
+    <div class="sc" style="border-top:3px solid #f59e0b">
+      <div style="font-size:20px;margin-bottom:8px">👁️</div>
+      <div class="sl">Monitor</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>WBC 8.1</strong> ↑ (immune response), <strong>Cholesterol dropped</strong> 5.93→4.30 (acute-phase), <strong>Bilirubin</strong> Gilbert's pattern, <strong>B12 elevated</strong> 745.7</div>
+    </div>
+    <div class="sc" style="border-top:3px solid #10b981">
+      <div style="font-size:20px;margin-bottom:8px">✅</div>
+      <div class="sl">Improvements</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>Triglycerides</strong> normalized (1.44 ✓), <strong>Vit D</strong> 97.4 ✓, <strong>Testosterone</strong> 24.29 ✓, <strong>Homocysteine</strong> 7.33 (normal), <strong>ALT</strong> 0.47 (normalizing)</div>
+    </div>
+    <div class="sc" style="border-top:3px solid #8b5cf6">
+      <div style="font-size:20px;margin-bottom:8px">🧬</div>
+      <div class="sl">Genetic Priority</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>SLCO1B1 *5 allele</strong> (statin myopathy risk!), <strong>SOD2 +/+</strong> (oxidative stress), <strong>APOA5 CG</strong> (TG elevation)</div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 2: FULL LAB RESULTS TABLE ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:var(--pri);border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">2. Complete Blood Test Results (8 Tests)</h2>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div style="overflow-x:auto">
+      <table class="dt" style="min-width:900px">
+        <thead>
+          <tr style="background:#f8fafc">
+            <th style="min-width:160px">Test</th>
+            <th>Unit</th>
+            <th>Range</th>
+            <th style="background:#fef9f0">Feb 2023</th>
+            <th style="background:#fef9f0">Jul 2023</th>
+            <th style="background:#fef9f0">Mar 2024</th>
+            <th style="background:#fef9f0">Oct 2024</th>
+            <th style="background:#fef9f0">Feb 2025</th>
+            <th style="background:#fef9c3">Jul 2025</th>
+            <th style="background:#fef9f0">Oct 2025</th>
+            <th style="background:#fef9f0">Dec 2025</th>
+            <th style="background:#f0fff4">May 2026</th>
+            <th style="background:#fce7f3">Jun 2026</th>
+            <th>Trend</th>
+          </tr>
+        </thead>
+        <tbody id="fr-lab-table"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:14px;font-size:12px;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)">
+      <span><span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-weight:600">H</span> Above range</span>
+      <span><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-weight:600">L</span> Below range</span>
+      <span><span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-weight:600">✓</span> Normal</span>
+      <span style="color:#cbd5e1">— Not tested this date</span>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 3: GENETIC PROFILE ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:#8b5cf6;border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">3. Genetic Profile (MyHeritage Raw DNA — ~609K SNPs)</h2>
+  </div>
+  <div id="fr-genetic-grid" style="margin-bottom:20px"></div>
+
+  <!-- ═══ SECTION 4: INTEGRATED CONCLUSIONS ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:#ef4444;border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">4. Integrated Conclusions (Labs × Genetics)</h2>
+  </div>
+  <div id="fr-insights" style="display:flex;flex-direction:column;gap:16px;margin-bottom:28px"></div>
+
+  <!-- ═══ SECTION 5: ACTIONABLE SUMMARY ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:#10b981;border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">5. Action Plan Summary</h2>
+  </div>
+  <div class="g3" style="margin-bottom:28px">
+    <div class="card" style="border-top:3px solid #ef4444">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Discuss with Your Doctor</div>
+      <ul style="font-size:13px;line-height:2;padding-left:16px;color:var(--txt)">
+        <li>Cardiovascular risk assessment (rising cholesterol + high TG)</li>
+        <li>Why is B12 2–3× above range? Are you supplementing?</li>
+        <li>Confirm Gilbert's syndrome (recurrent bilirubin pattern)</li>
+        <li>Consider homocysteine test (functional B12/folate marker)</li>
+        <li>Omega-3 / statin discussion for lipid management</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid #f59e0b">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🥗 Nutrition & Lifestyle</div>
+      <ul style="font-size:13px;line-height:2;padding-left:16px;color:var(--txt)">
+        <li>Reduce refined carbs & alcohol (triglyceride drivers)</li>
+        <li>Antioxidant-rich diet: berries, olive oil, leafy greens</li>
+        <li>Betaine-rich foods: beets, spinach, quinoa (for BHMT)</li>
+        <li>Choline: eggs, liver, legumes (methylation support)</li>
+        <li>DIM / sulforaphane (broccoli) for hormone detox (CYP1B1)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid #8b5cf6">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">💊 Supplements to Consider</div>
+      <ul style="font-size:13px;line-height:2;padding-left:16px;color:var(--txt)">
+        <li>CoQ10 — supports SOD2 +/+ mitochondrial function</li>
+        <li>Vitamin D3 — trend declining, VDR variants reduce receptor efficiency</li>
+        <li>Omega-3 (EPA/DHA) — reduces triglycerides</li>
+        <li>Magnesium — BH4 support, general methylation</li>
+        <li><em>Review B12 supplement dose with doctor first</em></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 6: LIFESTYLE & MEDICATION CONTEXT ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:#f59e0b;border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">6. Lifestyle, Medications & Lab Cross-References</h2>
+  </div>
+  <div id="fr-lifestyle" style="margin-bottom:28px"></div>
+
+  <!-- ═══ SECTION 7: TREND CHARTS ═══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:4px;height:28px;background:var(--pri);border-radius:2px"></div>
+    <h2 style="font-size:18px;font-weight:700">7. Key Trend Charts</h2>
+  </div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Lipids Over Time</div>
+      <div style="position:relative;height:200px"><canvas id="fr-lipidChart"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="color:#ef4444">■ Total Chol (limit 5.0)</span>
+        <span style="color:#f59e0b">■ Triglycerides (limit 1.70)</span>
+        <span style="color:#10b981">■ HDL</span>
+        <span style="color:#8b5cf6">■ LDL (limit 3.0)</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Vitamins Over Time</div>
+      <div style="position:relative;height:200px"><canvas id="fr-vitChart"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="color:#f59e0b">■ Vitamin D nmol/L (left axis)</span>
+        <span style="color:#4f7ef8">■ B12 pmol/L (right axis)</span>
+      </div>
+    </div>
+  </div>
+  <div class="g2" style="margin-bottom:28px">
+    <div class="card">
+      <div class="ct">Liver — Bilirubin & Enzymes</div>
+      <div style="position:relative;height:200px"><canvas id="fr-liverChart"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="color:#f59e0b">■ Bilirubin µmol/L</span>
+        <span style="color:#ef4444">■ AST ×100 µkat/L</span>
+        <span style="color:#4f7ef8">■ ALT ×100 µkat/L</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Kidney — Creatinine & Uric Acid</div>
+      <div style="position:relative;height:200px"><canvas id="fr-kidneyChart"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="color:#10b981">■ Creatinine µmol/L (left)</span>
+        <span style="color:#8b5cf6">■ Uric Acid µmol/L (right)</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Illness Log -->
+  <div id="med-illness" class="med-sec" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <div class="ct">Acute Illness History</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Logged acute episodes — viral infections, injuries, and short-term health events.</p>
+      <div id="illness-list"></div>
+    </div>
+  </div>
+</div>
+<!-- LAB ANALYSIS -->
+<div id="page-labanalysis" class="page">
+  <div class="ph"><h1>🔬 Lab Analysis</h1><p>Your blood work across 10 time points — Feb 2023 to Jun 2026. Flagged values and trends are highlighted.</p></div>
+
+  <!-- Alert banner -->
+  <div id="lab-alerts" style="margin-bottom:20px"></div>
+
+  <!-- Summary stat cards -->
+  <div class="g4" style="margin-bottom:20px">
+    <div class="sc" style="border-left:4px solid #ef4444">
+      <div class="sl">⚠️ Currently Flagged</div>
+      <div class="sv" style="color:#ef4444">3</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Cholesterol, Bilirubin, Borrelia IgM</div>
+    </div>
+    <div class="sc" style="border-left:4px solid #f59e0b">
+      <div class="sl">📉 Improving Trend</div>
+      <div class="sv" style="color:#10b981">↓</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Cholesterol improving (7.05→5.69)</div>
+    </div>
+    <div class="sc" style="border-left:4px solid #10b981">
+      <div class="sl">✅ Improving</div>
+      <div class="sv" style="color:#10b981">4</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">LDL, TG, Creatinine, Vitamin D</div>
+    </div>
+    <div class="sc" style="border-left:4px solid #4f7ef8">
+      <div class="sl">📅 Last Test</div>
+      <div class="sv" style="font-size:18px">Jun 2026</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">10 time points since Feb 2023</div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabbar">
+    <button class="tabbtn active" onclick="labTab('trends',this)">📈 Trends</button>
+    <button class="tabbtn" onclick="labTab('table',this)">📋 Full Results</button>
+    <button class="tabbtn" onclick="labTab('findings',this)">🔍 Key Findings</button>
+  </div>
+
+  <!-- TRENDS TAB -->
+  <div id="lab-trends" class="lab-sec">
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">🫀 Lipids — Total Cholesterol & Triglycerides</div>
+        <div style="background:#fff8f8;border-left:3px solid #ef4444;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#7f1d1d">
+          📉 <strong>Improving:</strong> Cholesterol peaked at 7.05 mmol/L (Dec 2025), now down to 5.69 (Jun 2026). LDL dropped sharply: 4.13 (May 2026) → 2.87 (Jun 2026) — now in range. Triglycerides normalized: 3.30 (Oct 2025) → 1.44 (May 2026).
+        </div>
+        <div style="position:relative;height:220px"><canvas id="lipidChart"></canvas></div>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#ef4444;display:inline-block;border-radius:2px"></span>Total Cholesterol (limit 5.0)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#f59e0b;display:inline-block;border-radius:2px"></span>Triglycerides (limit 1.70)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#10b981;display:inline-block;border-radius:2px"></span>HDL (good cholesterol)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#8b5cf6;display:inline-block;border-radius:2px"></span>LDL (limit 3.0)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">🫁 Liver — Bilirubin & Enzymes</div>
+        <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#78350f">
+          ℹ️ <strong>Bilirubin recurrently elevated</strong> (Mar 2024 & Oct 2025). AST spiked Oct 2024 but resolved. Consider Gilbert's syndrome.
+        </div>
+        <div style="position:relative;height:220px"><canvas id="liverChart"></canvas></div>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#f59e0b;display:inline-block;border-radius:2px"></span>Bilirubin (limit 21)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#ef4444;display:inline-block;border-radius:2px"></span>AST (limit 0.67)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:#4f7ef8;display:inline-block;border-radius:2px"></span>ALT (limit 0.68)</span>
+        </div>
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="ct">💉 Vitamin B12 & Vitamin D</div>
+        <div style="background:#eff6ff;border-left:3px solid #4f7ef8;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#1e3a5f">
+          🔵 <strong>B12 persistently 2–3× above range</strong> (range: 145–569 pmol/L). Vitamin D declining but still in range. Both intersect with your DNA variants.
+        </div>
+        <div style="position:relative;height:200px"><canvas id="vitChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ct">🩸 Kidney — Creatinine & Uric Acid</div>
+        <div style="background:#f0fdf4;border-left:3px solid #10b981;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#14532d">
+          ✅ <strong>Improving:</strong> Creatinine normalized from 111–112 (H) to 88–91 (normal). Uric acid spiked Feb 2025 but resolved.
+        </div>
+        <div style="position:relative;height:200px"><canvas id="kidneyChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL TABLE TAB -->
+  <div id="lab-table" class="lab-sec" style="display:none">
+    <div class="card">
+      <div class="ct">Complete Results — All Dates</div>
+      <div style="overflow-x:auto">
+        <table class="dt" style="min-width:700px">
+          <thead><tr>
+            <th>Test</th><th>Unit</th><th>Normal Range</th>
+            <th>Feb 2023</th><th>Jul 2023</th><th>Mar 2024</th><th>Oct 2024</th><th>Feb 2025</th><th style="background:#fef9c3">Jul 2025</th><th>Oct 2025</th><th>Dec 2025</th><th style="background:#f0fff4">May 2026</th><th style="background:#fce7f3">Jun 2026</th>
+          </tr></thead>
+          <tbody id="lab-full-table"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap">
+        <span><span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">H</span> Above range</span>
+        <span><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">L</span> Below range</span>
+        <span><span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">✓</span> Normal</span>
+        <span>— Not tested</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY FINDINGS TAB -->
+  <div id="lab-findings" class="lab-sec" style="display:none">
+    <div class="g2">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="border-left:4px solid #ef4444">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">🫀</span>
+            <div><div style="font-weight:700;font-size:15px">Cardiovascular Risk — Needs Attention</div><span class="tag trd">High Priority</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Cholesterol peaked at <strong>7.05 mmol/L (Dec 2025)</strong> and has since improved to <strong>5.69 (Jun 2026)</strong> — still above the 5.0 target but trending in the right direction. LDL dropped sharply from 4.13 (May 2026) to <strong>2.87 mmol/L (Jun 2026)</strong> — now within range. Triglycerides normalized from 3.30 (Oct 2025) to 1.44 (May 2026) without medication, suggesting lifestyle changes are working. Non-HDL is still elevated at 4.30 (target &lt;3.80).<br><br>
+          <strong>Context:</strong> Given your Gilbert syndrome + SLCO1B1 genetic variant, statins require extra caution. Fenofibrate (Lipanthyl) is effective for TG control but not for LDL/total cholesterol. Current trajectory without medication is positive — sustain with continued low alcohol intake and reduced refined carbohydrates.</p>
+        </div>
+
+        <div class="card" style="border-left:4px solid #f59e0b">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">💊</span>
+            <div><div style="font-weight:700;font-size:15px">Vitamin B12 — Persistently Elevated</div><span class="tag tyw">Monitor</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">B12 has been 2–3× above the upper limit across all tests: <strong>882, 882, 842, 891 pmol/L</strong> (range: 145–569). This is consistent and significant. Possible causes include B12 supplementation, liver-related storage issues, or rarely a myeloproliferative condition. Your liver enzymes are mostly normal (AST briefly elevated Oct 2024).<br><br>
+          <strong>Intersection with genetics:</strong> Your MTRR A66G +/- variant reduces B12 recycling efficiency — the body may compensate by accumulating more. However at these levels, it's worth discussing with your doctor whether you are supplementing B12 and if so, whether to reduce the dose.</p>
+        </div>
+
+        <div class="card" style="border-left:4px solid #f59e0b">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">🫁</span>
+            <div><div style="font-weight:700;font-size:15px">Bilirubin — Recurrent Mild Elevation</div><span class="tag tyw">Monitor</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Bilirubin was elevated in Mar 2024 (27.2 H) and Oct 2025 (27.1 H), with normal values in between. This pattern — intermittent isolated bilirubin elevation with otherwise normal liver enzymes — is classic for <strong>Gilbert's syndrome</strong>, a benign genetic variant in bilirubin processing that affects ~5–10% of people.<br><br>
+          <strong>Recommendation:</strong> If not already confirmed, mention this pattern to your doctor. Gilbert's is benign and typically triggered by fasting, stress, or illness. No treatment needed, but worth confirming the diagnosis.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="border-left:4px solid #10b981">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">✅</span>
+            <div><div style="font-weight:700;font-size:15px">Kidney Function — Significantly Improved</div><span class="tag tgr">Good News</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Creatinine was elevated at <strong>111–112 µmol/L</strong> in 2024 (above range of 62–106) but returned to normal in 2025 (<strong>88–91</strong>). GFR is consistently normal. Uric acid spiked to 422 in Feb 2025 (slightly above 417 limit) but returned to normal.<br><br>
+          Kidney function is currently good. The earlier creatinine elevation may have reflected higher muscle mass, dehydration, or temporary factors.</p>
+        </div>
+
+        <div class="card" style="border-left:4px solid #10b981">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">🩸</span>
+            <div><div style="font-weight:700;font-size:15px">Immune Profile — Normalized</div><span class="tag tgr">Improved</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">In Mar and Oct 2024, neutrophils were low (42.4%) and lymphocytes elevated (48.1%). Normalized through 2025. Latest Jun 2026: neutrophils <strong>55.3%</strong>, lymphocytes <strong>35.7%</strong> — both well within normal range. WBC elevated at 8.1 × 10⁹/L (Jun 2026), up from 5.2 (May 2026) and 7.5 (Dec 2025), likely related to the active Borrelia IgM finding. Doctor has reviewed the Borrelia results and assessed the immune response as not requiring treatment.</p>
+        </div>
+
+        <div class="card" style="border-left:4px solid #10b981">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">⚡</span>
+            <div><div style="font-weight:700;font-size:15px">Hormones & Metabolic — All Normal</div><span class="tag tgr">Good</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Glucose stable (4.3–4.7 mmol/L, well within range). HbA1c normal at 30–31 mmol/mol — no pre-diabetes risk. Testosterone healthy at <strong>20.7–24.3 nmol/L</strong>. TSH stable: 2.13 (Dec 2025), 1.85 (Jun 2026) — well within range. Vitamin D <strong>recovered to 97.4 nmol/L</strong> (May 2026), up from 75.5 (Dec 2025) — Revihair D3 supplementation is working. Cortisol normal. PSA normal and stable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DNA ANALYSIS -->
+<div id="page-dnaanalysis" class="page">
+  <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1>🧬 DNA & Genetics Analysis</h1>
+      <p>Direct analysis of your MyHeritage raw DNA (~609,000 SNPs). Genotypes read directly from your raw data file, not from third-party tools.</p>
+    </div>
+    <button class="print-btn sec no-print" onclick="printDnaAnalysis()">⬇️ Export DNA PDF</button>
+  </div>
+
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 18px;margin-bottom:20px;font-size:13px;color:#78350f">
+    ⚠️ <strong>Disclaimer:</strong> This is informational SNP analysis, not a medical diagnosis. Variants indicate altered enzyme efficiency, not disease certainty. Source: MyHeritage raw DNA (build37, forward strand, ~609K SNPs). Always consult a qualified healthcare provider before acting on any findings.
+  </div>
+
+  <!-- Summary bar -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+    <div style="background:#fee2e2;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:#dc2626">2</div>
+      <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase">Critical Risk</div>
+      <div style="font-size:11px;color:#7f1d1d;margin-top:4px">SOD2+/+, SLCO1B1*5</div>
+    </div>
+    <div style="background:#fee2e2;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:#b91c1c">8</div>
+      <div style="font-size:11px;font-weight:700;color:#b91c1c;text-transform:uppercase">High Impact</div>
+      <div style="font-size:11px;color:#7f1d1d;margin-top:4px">APOA5, LPA, FTO, GSTP1…</div>
+    </div>
+    <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:#16a34a">6</div>
+      <div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase">Protective</div>
+      <div style="font-size:11px;color:#14532d;margin-top:4px">No F.V Leiden, TCF7L2 ✓…</div>
+    </div>
+    <div style="background:#ede9fe;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:#7c3aed">~609K</div>
+      <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase">SNPs Analyzed</div>
+      <div style="font-size:11px;color:#4c1d95;margin-top:4px">MyHeritage GSA chip</div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tabbtn active" onclick="dnaTab('cardiovascular',this)">❤️ Cardiovascular</button>
+    <button class="tabbtn" onclick="dnaTab('metabolism',this)">⚖️ Metabolism</button>
+    <button class="tabbtn" onclick="dnaTab('methylation',this)">🔵 Methylation</button>
+    <button class="tabbtn" onclick="dnaTab('detox',this)">🧹 Detox</button>
+    <button class="tabbtn" onclick="dnaTab('vitamins',this)">☀️ Vitamins</button>
+    <button class="tabbtn" onclick="dnaTab('brain',this)">🧠 Brain</button>
+    <button class="tabbtn" onclick="dnaTab('drugmeta',this)">💊 Drugs</button>
+    <button class="tabbtn" onclick="dnaTab('dnainsights',this)">🔗 Insights</button>
+  </div>
+
+  <div id="dna-cardiovascular" class="dna-sec"><div id="dna-cat-cardiovascular"></div></div>
+  <div id="dna-metabolism" class="dna-sec" style="display:none"><div id="dna-cat-metabolism"></div></div>
+  <div id="dna-methylation" class="dna-sec" style="display:none"><div id="dna-cat-methylation"></div></div>
+  <div id="dna-detox" class="dna-sec" style="display:none"><div id="dna-cat-detox"></div></div>
+  <div id="dna-vitamins" class="dna-sec" style="display:none"><div id="dna-cat-vitamins"></div></div>
+  <div id="dna-brain" class="dna-sec" style="display:none"><div id="dna-cat-brain"></div></div>
+  <div id="dna-drugmeta" class="dna-sec" style="display:none"><div id="dna-cat-drugmeta"></div></div>
+  <div id="dna-dnainsights" class="dna-sec" style="display:none"><div id="dna-insights-list"></div></div>
+</div>
+
+</div><!-- /main -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA LAYER ──────────────────────────────────────────────
+const DB = {
+  get:(k)=>JSON.parse(localStorage.getItem('hp_'+k)||'[]'),
+  obj:(k)=>JSON.parse(localStorage.getItem('hp_'+k)||'{}'),
+  set:(k,v)=>localStorage.setItem('hp_'+k,JSON.stringify(v)),
+  add:(k,item)=>{const d=DB.get(k);d.push(item);DB.set(k,d)},
+  del:(k,i)=>{const d=DB.get(k);d.splice(i,1);DB.set(k,d)}
+};
+const charts={};
+function kc(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+
+// ── NAV ─────────────────────────────────────────────────────
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav').forEach(x=>{if(x.getAttribute('onclick')?.includes("'"+p+"'"))x.classList.add('active')});
+  ({dashboard:rDash,weight:rWeight,exercise:rExercise,sleep:rSleep,medical:rMedical,longevity:rLongevity,fullreport:rFullReport,labanalysis:rLabAnalysis,dnaanalysis:rDnaAnalysis,profile:rProfile})[p]?.();
+}
+
+// ── HELPERS ─────────────────────────────────────────────────
+const td=()=>new Date().toISOString().split('T')[0];
+function last14(){const a=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);a.push(d.toISOString().split('T')[0])}return a}
+function last30(){const a=[];for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);a.push(d.toISOString().split('T')[0])}return a}
+function fd(d){if(!d)return'';const[y,m,day]=d.split('-');return`${parseInt(day)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]}`}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+function calcBMI(w,wu,h,hu){const wk=wu==='lbs'?w*0.453592:w;const hm=hu==='in'?h*0.0254:h/100;return hm?(wk/(hm*hm)).toFixed(1):null}
+function bmiCat(b){if(b<18.5)return['Underweight','tyw'];if(b<25)return['Normal','tgr'];if(b<30)return['Overweight','tyw'];return['Obese','trd']}
+function greet(){const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening'}
+
+const chartDefaults={plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{maxTicksLimit:8,font:{size:10}}}}};
+
+// ── DASHBOARD ────────────────────────────────────────────────
+function rDash(){
+  const p=DB.obj('profile');
+  document.getElementById('dash-greeting').textContent=greet()+', '+(p.name||'there')+' 👋';
+  const W=DB.get('weight'),S=DB.get('sleep'),E=DB.get('exercise');
+  const lw=W.length?W[W.length-1]:null;
+  const sl7=S.slice(-7);
+  const avgSl=sl7.length?(sl7.reduce((a,b)=>a+parseFloat(b.hrs||b.hours||0),0)/sl7.length).toFixed(1):null;
+  const exW=E.filter(e=>(new Date()-new Date(e.date))/86400000<=7);
+  const latestChol=LAB_RAW?LAB_RAW.find(x=>x.t==='Total Cholesterol')?.v.filter(v=>v!==null).pop():null;
+  const latestLDL=LAB_RAW?LAB_RAW.find(x=>x.t==='LDL Cholesterol')?.v.filter(v=>v!==null).pop():null;
+  const latestWBC=LAB_RAW?LAB_RAW.find(x=>x.t==='WBC')?.v.filter(v=>v!==null).pop():null;
+  const latestBor=LAB_RAW?LAB_RAW.find(x=>x.t==='Borrelia IgM')?.v.filter(v=>v!==null).pop():null;
+  document.getElementById('dash-stats').innerHTML=[
+    {l:'Total Cholesterol',v:latestChol||'—',u:latestChol?'mmol/L':'',i:'🫀',b:latestChol&&latestChol>5.0?'Above range (Jun 2026)':'In range',bc:latestChol&&latestChol>5.0?'br':'bg'},
+    {l:'LDL Cholesterol',v:latestLDL||'—',u:latestLDL?'mmol/L':'',i:'💊',b:latestLDL&&latestLDL>3.0?'Above range':'In range (Jun 2026)',bc:latestLDL&&latestLDL>3.0?'br':'bg'},
+    {l:'WBC (White Blood Cells)',v:latestWBC||'—',u:latestWBC?'10⁹/L':'',i:'🩸',b:latestWBC&&latestWBC>10?'Above range':latestWBC&&latestWBC>7?'Mildly elevated':'In range',bc:latestWBC&&latestWBC>10?'br':latestWBC&&latestWBC>7?'by':'bg'},
+    {l:'Borrelia IgM',v:latestBor||'—',u:latestBor?'U/mL':'',i:'🦠',b:latestBor&&latestBor>16?'Elevated — under review':'In range',bc:latestBor&&latestBor>16?'by':'bg'}
+  ].map(s=>`<div class="sc"><div style="font-size:24px;margin-bottom:10px">${s.i}</div><div class="sl">${s.l}</div><div class="sv">${s.v} <span class="su">${s.u}</span></div><span class="badge ${s.bc}">${s.b}</span></div>`).join('');
+
+  // Weight/Sleep charts — disabled until wearable connected
+  if(document.getElementById('dWChart')){kc('dW');}
+  if(document.getElementById('dSChart')){kc('dS');}
+
+  // Cholesterol chart (from lab data)
+  kc('dC');
+  const tcRow=LAB_RAW?LAB_RAW.find(x=>x.t==='Total Cholesterol'):null;
+  const ldlRow=LAB_RAW?LAB_RAW.find(x=>x.t==='LDL Cholesterol'):null;
+  const hdlRow=LAB_RAW?LAB_RAW.find(x=>x.t==='HDL Cholesterol'):null;
+  if(tcRow&&document.getElementById('dCChart')){
+    charts['dC']=new Chart(document.getElementById('dCChart').getContext('2d'),{type:'line',data:{labels:LAB_DATES,datasets:[
+      {label:'Total Chol',data:tcRow.v,borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+      {label:'LDL (bad)',data:ldlRow?ldlRow.v:[],borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+      {label:'HDL (good)',data:hdlRow?hdlRow.v:[],borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+      {label:'Limit 5.0',data:[5,5,5,5,5,5,5,5,5,5],borderColor:'rgba(239,68,68,.25)',borderDash:[5,5],pointRadius:0,fill:false},
+    ]},options:{...chartDefaults,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}}}}});
+  }
+
+  // Exercise chart — disabled until wearable connected
+  if(document.getElementById('dEChart')){kc('dE');}
+}
+
+// ── WEIGHT ───────────────────────────────────────────────────
+function addWeight(){
+  const date=document.getElementById('w-date').value,val=parseFloat(document.getElementById('w-val').value);
+  if(!date||isNaN(val)){toast('⚠️ Enter date and weight');return}
+  DB.add('weight',{date,value:val,unit:document.getElementById('w-unit').value,notes:document.getElementById('w-notes').value});
+  ['w-val','w-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Weight logged!');rWeight();
+}
+function rWeight(){
+  const W=DB.get('weight'),p=DB.obj('profile'),sorted=[...W].sort((a,b)=>a.date.localeCompare(b.date));
+  const lw=W.length?W[W.length-1]:null;
+  if(lw&&p.height){const bmi=calcBMI(lw.value,lw.unit,p.height,p.hunit||'cm');if(bmi){const[cat,cls]=bmiCat(parseFloat(bmi));document.getElementById('bmi-box').style.display='block';document.getElementById('bmi-val').textContent=bmi;document.getElementById('bmi-cat').textContent=cat;document.getElementById('bmi-cat').className='tag '+cls}}
+  kc('wM');charts['wM']=new Chart(document.getElementById('wChart').getContext('2d'),{type:'line',data:{labels:sorted.map(w=>fd(w.date)),datasets:[{data:sorted.map(w=>parseFloat(w.value)),borderColor:'#4f7ef8',backgroundColor:'rgba(79,126,248,.1)',tension:.3,fill:true,pointRadius:4}]},options:chartDefaults});
+  const wrap=document.getElementById('w-table');
+  if(!W.length){wrap.innerHTML='<div class="empty"><div class="ei">⚖️</div><p>No entries yet. Log your first measurement!</p></div>';return}
+  wrap.innerHTML=`<table class="dt"><thead><tr><th>Date</th><th>Weight</th><th>BMI</th><th>Notes</th><th></th></tr></thead><tbody>`+
+    [...W].reverse().map((w,i)=>{const bmi=p.height?calcBMI(w.value,w.unit,p.height,p.hunit||'cm'):'—';return`<tr><td>${fd(w.date)}</td><td><strong>${w.value} ${w.unit}</strong></td><td>${bmi||'—'}</td><td>${w.notes||'—'}</td><td><button class="delbtn" onclick="del('weight',${W.length-1-i})">🗑</button></td></tr>`}).join('')+`</tbody></table>`;
+}
+
+// ── EXERCISE ─────────────────────────────────────────────────
+function addExercise(){
+  const date=document.getElementById('ex-date').value,dur=parseInt(document.getElementById('ex-dur').value);
+  if(!date||isNaN(dur)){toast('⚠️ Enter date and duration');return}
+  DB.add('exercise',{date,type:document.getElementById('ex-type').value,duration:dur,calories:parseInt(document.getElementById('ex-cal').value)||0,intensity:document.getElementById('ex-int').value,notes:document.getElementById('ex-notes').value});
+  ['ex-dur','ex-cal','ex-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Workout logged!');rExercise();
+}
+function rExercise(){
+  const E=DB.get('exercise');
+  const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const days7=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days7.push(d.toISOString().split('T')[0])}
+  const eMap={};E.forEach(e=>{eMap[e.date]=(eMap[e.date]||0)+(parseInt(e.duration)||0)});
+  kc('exW');charts['exW']=new Chart(document.getElementById('exWChart').getContext('2d'),{type:'bar',data:{labels:days7.map(d=>dn[new Date(d+'T12:00:00').getDay()]),datasets:[{data:days7.map(d=>eMap[d]||0),backgroundColor:'rgba(16,185,129,.75)',borderRadius:6}]},options:chartDefaults});
+  const tc={};E.forEach(e=>tc[e.type]=(tc[e.type]||0)+1);
+  kc('exT');
+  const tCtx=document.getElementById('exTChart').getContext('2d');
+  if(Object.keys(tc).length){
+    charts['exT']=new Chart(tCtx,{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:['#4f7ef8','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899'],borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}},animation:false}});
+  } else {
+    tCtx.canvas.parentElement.innerHTML='<div class="empty" style="padding:20px"><p>Log workouts to see breakdown</p></div>';
+  }
+  const now=new Date();
+  const mE=E.filter(e=>{const d=new Date(e.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()});
+  const tMin=mE.reduce((a,b)=>a+(parseInt(b.duration)||0),0);
+  const tCal=mE.reduce((a,b)=>a+(parseInt(b.calories)||0),0);
+  document.getElementById('ex-month').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:8px">
+    <div><div class="sl">Sessions</div><div style="font-size:28px;font-weight:700;margin-top:4px">${mE.length}</div></div>
+    <div><div class="sl">Total Time</div><div style="font-size:28px;font-weight:700;margin-top:4px">${Math.round(tMin/60)}<span style="font-size:14px;color:var(--muted)"> hrs</span></div></div>
+    <div><div class="sl">Cal Burned</div><div style="font-size:28px;font-weight:700;margin-top:4px">${tCal.toLocaleString()}</div></div>
+    <div><div class="sl">Avg Duration</div><div style="font-size:28px;font-weight:700;margin-top:4px">${mE.length?Math.round(tMin/mE.length):0}<span style="font-size:14px;color:var(--muted)"> min</span></div></div>
+  </div>`;
+  const wrap=document.getElementById('ex-table');
+  if(!E.length){wrap.innerHTML='<div class="empty"><div class="ei">🏃</div><p>No workouts logged yet.</p></div>';return}
+  const ic={Low:'tbl',Moderate:'tyw',High:'trd'};
+  wrap.innerHTML=`<table class="dt"><thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Calories</th><th>Intensity</th><th>Notes</th><th></th></tr></thead><tbody>`+
+    [...E].reverse().map((e,i)=>`<tr><td>${fd(e.date)}</td><td><strong>${e.type}</strong></td><td>${e.duration} min</td><td>${e.calories||'—'}</td><td><span class="tag ${ic[e.intensity]||'tgy'}">${e.intensity}</span></td><td>${e.notes||'—'}</td><td><button class="delbtn" onclick="del('exercise',${E.length-1-i})">🗑</button></td></tr>`).join('')+`</tbody></table>`;
+}
+
+// ── SLEEP ────────────────────────────────────────────────────
+function addSleep(){
+  const date=document.getElementById('sl-date').value,hrs=parseFloat(document.getElementById('sl-hrs').value);
+  if(!date||isNaN(hrs)){toast('⚠️ Enter date and hours');return}
+  DB.add('sleep',{date,hours:hrs,quality:parseInt(document.getElementById('sl-q').value),notes:document.getElementById('sl-notes').value});
+  ['sl-hrs','sl-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Sleep logged!');rSleep();
+}
+function rSleep(){
+  const S=DB.get('sleep');
+  const sMap={};S.forEach(s=>sMap[s.date]=parseFloat(s.hours));
+  const sv=last14().map(d=>sMap[d]??null);
+  kc('slM');charts['slM']=new Chart(document.getElementById('slChart').getContext('2d'),{type:'bar',data:{labels:last14().map(fd),datasets:[{data:sv,backgroundColor:sv.map(v=>v===null?'transparent':v>=7?'rgba(16,185,129,.75)':v>=6?'rgba(245,158,11,.75)':'rgba(239,68,68,.75)'),borderRadius:5},{type:'line',data:last14().map(()=>7),borderColor:'rgba(79,126,248,.5)',borderDash:[5,5],pointRadius:0,fill:false,label:'Target'}]},options:{...chartDefaults,plugins:{legend:{display:false}},scales:{y:{min:0,max:12,grid:{color:'#f1f5f9'}},x:{ticks:{maxTicksLimit:7,font:{size:10}}}}}});
+  const l7=S.slice(-7);
+  const avg7=l7.length?(l7.reduce((a,b)=>a+parseFloat(b.hours),0)/l7.length).toFixed(1):'—';
+  const avgQ=l7.length?(l7.reduce((a,b)=>a+parseInt(b.quality),0)/l7.length).toFixed(1):'—';
+  const best=S.length?Math.max(...S.map(s=>parseFloat(s.hours))).toFixed(1):'—';
+  document.getElementById('sl-stats').innerHTML=[
+    {l:'Avg Sleep (7d)',v:avg7,u:'hrs',b:avg7>=7?'✓ On target':'Below 7hr goal',c:avg7>=7?'bg':'by'},
+    {l:'Avg Quality (7d)',v:avgQ,u:'/ 5',b:avgQ>=4?'✓ Good quality':'Room to improve',c:avgQ>=4?'bg':'by'},
+    {l:'Best Night',v:best,u:'hrs',b:'All time',c:'bb'}
+  ].map(s=>`<div class="sc"><div class="sl">${s.l}</div><div class="sv">${s.v} <span class="su">${s.u}</span></div><span class="badge ${s.c}">${s.b}</span></div>`).join('');
+  const wrap=document.getElementById('sl-table');
+  if(!S.length){wrap.innerHTML='<div class="empty"><div class="ei">🌙</div><p>No sleep entries yet.</p></div>';return}
+  wrap.innerHTML=`<table class="dt"><thead><tr><th>Date</th><th>Duration</th><th>Quality</th><th>Notes</th><th></th></tr></thead><tbody>`+
+    [...S].reverse().map((s,i)=>`<tr><td>${fd(s.date)}</td><td><strong>${s.hours} hrs</strong></td><td>${'⭐'.repeat(s.quality)}</td><td>${s.notes||'—'}</td><td><button class="delbtn" onclick="del('sleep',${S.length-1-i})">🗑</button></td></tr>`).join('')+`</tbody></table>`;
+}
+
+// ── MEDICAL ───────────────────────────────────────────────────
+function medTab(sec,btn){
+  document.querySelectorAll('.med-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('med-'+sec).style.display='block';
+  btn.classList.add('active');
+}
+function addCondition(){
+  const name=document.getElementById('cond-name').value.trim();
+  if(!name){toast('⚠️ Enter condition name');return}
+  DB.add('conditions',{name,status:document.getElementById('cond-status').value,date:document.getElementById('cond-date').value,doctor:document.getElementById('cond-doc').value,notes:document.getElementById('cond-notes').value});
+  ['cond-name','cond-date','cond-doc','cond-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Condition added');rMedical();
+}
+function addMedication(){
+  const name=document.getElementById('med-name').value.trim();
+  if(!name){toast('⚠️ Enter medication name');return}
+  DB.add('medications',{name,dose:document.getElementById('med-dose').value,freq:document.getElementById('med-freq').value,start:document.getElementById('med-start').value,notes:document.getElementById('med-notes').value});
+  ['med-name','med-dose','med-start','med-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Medication added');rMedical();
+}
+function addAppointment(){
+  const doc=document.getElementById('appt-doc').value.trim(),date=document.getElementById('appt-date').value;
+  if(!doc||!date){toast('⚠️ Enter doctor and date');return}
+  DB.add('appointments',{date,time:document.getElementById('appt-time').value,doctor:doc,type:document.getElementById('appt-type').value,notes:document.getElementById('appt-notes').value});
+  ['appt-date','appt-time','appt-doc','appt-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Appointment added');rMedical();
+}
+function addLab(){
+  const test=document.getElementById('lab-test').value.trim(),date=document.getElementById('lab-date').value;
+  if(!test||!date){toast('⚠️ Enter test name and date');return}
+  DB.add('labs',{date,test,value:document.getElementById('lab-val').value,unit:document.getElementById('lab-unit').value,status:document.getElementById('lab-status').value,notes:document.getElementById('lab-notes').value});
+  ['lab-date','lab-test','lab-val','lab-unit','lab-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Lab result added');rMedical();
+}
+function rMedical(){
+  const sc={Active:'trd',Managed:'tyw',Resolved:'tgr',Monitoring:'tbl'};
+  const conds=DB.get('conditions');
+  document.getElementById('cond-list').innerHTML=conds.length?conds.map((c,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.doctor?c.doctor+' · ':''}${fd(c.date)}</div></div><div style="display:flex;gap:8px;align-items:center"><span class="tag ${sc[c.status]||'tgy'}">${c.status}</span><button class="delbtn" onclick="del('conditions',${i})">🗑</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>No conditions recorded</p></div>';
+  const meds=DB.get('medications');
+  document.getElementById('med-list').innerHTML=meds.length?meds.map((m,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${m.name} <span style="font-weight:400;color:var(--muted)">${m.dose}</span></div><div style="font-size:12px;color:var(--muted)">${m.freq} · Started ${fd(m.start)||'—'}</div></div><button class="delbtn" onclick="del('medications',${i})">🗑</button></div>`).join(''):'<div class="empty" style="padding:20px"><p>No medications recorded</p></div>';
+  const appts=DB.get('appointments').sort((a,b)=>a.date.localeCompare(b.date)),now=td();
+  document.getElementById('appt-list').innerHTML=appts.length?appts.map((a,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${a.doctor}</div><div style="font-size:12px;color:var(--muted)">${a.type} · ${fd(a.date)}${a.time?' at '+a.time:''}</div></div><div style="display:flex;gap:8px;align-items:center"><span class="tag ${a.date>=now?'tbl':'tgy'}">${a.date>=now?'Upcoming':'Past'}</span><button class="delbtn" onclick="del('appointments',${i})">🗑</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>No appointments recorded</p></div>';
+  const labs=DB.get('labs').sort((a,b)=>b.date.localeCompare(a.date)),lc={Normal:'tgr',Borderline:'tyw',Abnormal:'trd'};
+  // Render illness log
+  const sevColor={Mild:'tgr',Moderate:'tyw',Severe:'trd'};
+  document.getElementById('illness-list').innerHTML=HEALTH_EVENTS.length?HEALTH_EVENTS.map(e=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--card)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:15px">🤒 ${e.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${fd(e.date_start)} → ${fd(e.date_end)}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span class="tag ${sevColor[e.severity]||'tgy'}">${e.severity}</span>
+          <span class="tag tgr">${e.status}</span>
+        </div>
+      </div>
+      <div style="font-size:12.5px;line-height:1.6">
+        <div style="margin-bottom:4px"><strong>Tests:</strong> ${e.tests}</div>
+        <div style="margin-bottom:4px"><strong>Treatment:</strong> ${e.treatment}</div>
+        <div style="color:var(--muted)">${e.notes}</div>
+      </div>
+    </div>`).join(''):'<div class="empty" style="padding:20px"><p>No illness events recorded</p></div>';
+  document.getElementById('lab-list').innerHTML=labs.length?labs.map((l,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${l.test}: <span style="color:var(--txt)">${l.value} ${l.unit}</span></div><div style="font-size:12px;color:var(--muted)">${fd(l.date)}${l.notes?' · '+l.notes:''}</div></div><div style="display:flex;gap:8px;align-items:center"><span class="tag ${lc[l.status]||'tgy'}">${l.status}</span><button class="delbtn" onclick="del('labs',${i})">🗑</button></div></div>`).join(''):'<div class="empty" style="padding:20px"><p>No lab results recorded</p></div>';
+}
+
+// ── LONGEVITY ─────────────────────────────────────────────────
+function rLongevity(){
+  const W=DB.get('weight'),S=DB.get('sleep'),E=DB.get('exercise'),C=DB.get('conditions'),p=DB.obj('profile');
+  const sc={};
+  // BMI (0-20)
+  if(W.length&&p.height){const lw=W[W.length-1];const bmi=parseFloat(calcBMI(lw.value,lw.unit,p.height,p.hunit||'cm'));sc.bmi=bmi>=18.5&&bmi<25?20:bmi>=17&&bmi<27?14:bmi>=15&&bmi<30?8:4}else sc.bmi=10;
+  // Sleep (0-20)
+  const sl7=S.slice(-7);
+  if(sl7.length>=3){const ah=sl7.reduce((a,b)=>a+parseFloat(b.hours),0)/sl7.length;const aq=sl7.reduce((a,b)=>a+parseInt(b.quality),0)/sl7.length;sc.sleep=(ah>=7&&ah<=9?12:ah>=6?8:4)+(aq>=4?8:aq>=3?5:2)}else sc.sleep=10;
+  // Exercise (0-20)
+  const ex30=E.filter(e=>(new Date()-new Date(e.date))/86400000<=30);
+  const ws=ex30.length/4,tm=ex30.reduce((a,b)=>a+(parseInt(b.duration)||0),0)/4;
+  sc.exercise=ws>=4||tm>=150?20:ws>=3||tm>=100?15:ws>=1?8:3;
+  // Lab Health (0-20) — based on latest lab values in range
+  const labScore=(()=>{
+    const lastIdx=LAB_DATES.length-1;
+    const tested=LAB_RAW.filter(r=>r.v[lastIdx]!==null);
+    if(!tested.length)return 10;
+    const inRange=tested.filter(r=>{const v=r.v[lastIdx];return(r.lo===null||v>=r.lo)&&(r.hi===null||v<=r.hi)});
+    const pct=inRange.length/tested.length;
+    return Math.round(pct>=.90?20:pct>=.75?15:pct>=.60?10:6);
+  })();
+  sc.labs=labScore;
+  // Medical (0-20)
+  const ac=C.filter(c=>c.status==='Active').length,mc=C.filter(c=>c.status==='Managed').length;
+  sc.medical=ac===0&&mc===0?20:ac===0?16:ac<=1?10:6;
+  const total=Math.round(Object.values(sc).reduce((a,b)=>a+b,0));
+  document.getElementById('score-num').textContent=total;
+  const[grade,cls]=total>=80?['Excellent','tgr']:total>=65?['Good','tbl']:total>=50?['Fair','tyw']:['Needs Work','trd'];
+  document.getElementById('score-grade').textContent=grade;document.getElementById('score-grade').className='tag '+cls;
+  kc('sR');charts['sR']=new Chart(document.getElementById('scoreRing').getContext('2d'),{type:'doughnut',data:{datasets:[{data:[total,100-total],backgroundColor:[total>=80?'#10b981':total>=65?'#4f7ef8':total>=50?'#f59e0b':'#ef4444','#f1f5f9'],borderWidth:0}]},options:{cutout:'78%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:false}});
+  const lastIdx=LAB_DATES.length-1;
+  const tested=LAB_RAW.filter(r=>r.v[lastIdx]!==null);
+  const inRangeCount=tested.filter(r=>{const v=r.v[lastIdx];return(r.lo===null||v>=r.lo)&&(r.hi===null||v<=r.hi)}).length;
+  const factors=[
+    {i:'⚖️',n:'Weight & BMI',d:W.length?'Based on your latest entry':'No weight data yet',s:sc.bmi,c:'#4f7ef8'},
+    {i:'🌙',n:'Sleep Quality',d:S.length>=3?'Based on last 7 nights':'Log at least 3 nights',s:sc.sleep,c:'#8b5cf6'},
+    {i:'🏃',n:'Physical Activity',d:E.length?'Based on last 30 days':'No exercise logged yet',s:sc.exercise,c:'#10b981'},
+    {i:'🔬',n:'Lab Health',d:`${inRangeCount}/${tested.length} markers in range (${LAB_DATES[lastIdx]})`,s:sc.labs,c:'#f59e0b'},
+    {i:'🩺',n:'Medical Status',d:C.length?`${ac} active, ${mc} managed condition(s)`:'No conditions recorded',s:sc.medical,c:'#ef4444'}
+  ];
+  document.getElementById('long-factors').innerHTML=factors.map(f=>`<div class="frow"><div class="fico">${f.i}</div><div class="finfo"><div class="fname">${f.n}</div><div class="fdesc">${f.d}</div></div><div class="fbarw"><div class="fbarbg"><div class="fbarfill" style="width:${f.s/20*100}%;background:${f.c}"></div></div></div><div class="fscore" style="color:${f.c}">${f.s}/20</div></div>`).join('');
+  const recs=[];
+  if(sc.sleep<15)recs.push({i:'🌙',t:'Aim for 7–9 hours of sleep per night. Consistent sleep times support your circadian rhythm and recovery.'});
+  if(sc.exercise<15)recs.push({i:'🏃',t:'Target 150 minutes of moderate activity per week (about 4–5 sessions). Even brisk walking counts!'});
+  if(sc.labs<15)recs.push({i:'🔬',t:'Several lab markers are outside optimal range. Prioritise your doctor discussion on LDL, hsCRP, and CKD follow-up.'});
+  if(sc.bmi<15)recs.push({i:'⚖️',t:'A BMI between 18.5 and 24.9 is associated with lower disease risk. Combine balanced nutrition with regular exercise.'});
+  if(sc.medical<18)recs.push({i:'🩺',t:'Schedule regular checkups and follow-ups with your doctor. Managing conditions proactively improves long-term outcomes.'});
+  if(!recs.length)recs.push({i:'🎉',t:'Excellent work! Keep maintaining your healthy habits. Consider adding more variety to your workouts and trying new nutritious foods.'});
+  document.getElementById('long-recs').innerHTML=recs.map(r=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)"><span style="font-size:20px">${r.i}</span><p style="font-size:13.5px;line-height:1.6">${r.t}</p></div>`).join('');
+  // Save score history
+  const sh=DB.get('scoreHistory');const today=td();
+  const ex=sh.findIndex(s=>s.date===today);
+  if(ex>=0)sh[ex].score=total;else sh.push({date:today,score:total});
+  DB.set('scoreHistory',sh);
+  kc('sH');const hist=DB.get('scoreHistory').slice(-30);
+  charts['sH']=new Chart(document.getElementById('scoreHistChart').getContext('2d'),{type:'line',data:{labels:hist.map(h=>fd(h.date)),datasets:[{data:hist.map(h=>h.score),borderColor:'#4f7ef8',backgroundColor:'rgba(79,126,248,.1)',tension:.3,fill:true,pointRadius:4}]},options:{...chartDefaults,scales:{y:{min:0,max:100,grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}}}}}});
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+function loadProfile(){
+  const p=DB.obj('profile');
+  if(p.name)document.getElementById('p-name').value=p.name;
+  if(p.dob)document.getElementById('p-dob').value=p.dob;
+  if(p.gender)document.getElementById('p-gender').value=p.gender;
+  if(p.height)document.getElementById('p-height').value=p.height;
+  if(p.hunit)document.getElementById('p-hunit').value=p.hunit;
+  if(p.tw)document.getElementById('p-tw').value=p.tw;
+  if(p.wunit)document.getElementById('p-wunit').value=p.wunit;
+  if(p.calGoal)document.getElementById('p-calgoal').value=p.calGoal;
+}
+function saveProfile(){
+  const name=document.getElementById('p-name').value;
+  DB.set('profile',{name,dob:document.getElementById('p-dob').value,gender:document.getElementById('p-gender').value,height:parseFloat(document.getElementById('p-height').value),hunit:document.getElementById('p-hunit').value,tw:parseFloat(document.getElementById('p-tw').value),wunit:document.getElementById('p-wunit').value,calGoal:parseInt(document.getElementById('p-calgoal').value)});
+  rProfile();toast('✅ Profile saved!');
+}
+function rProfile(){
+  const p=DB.obj('profile');
+  if(p.name){document.getElementById('p-name-disp').textContent=p.name;document.getElementById('p-avatar').textContent=p.name[0].toUpperCase();if(p.dob){const age=Math.floor((new Date()-new Date(p.dob))/31557600000);document.getElementById('p-age-disp').textContent=age+' years old'}}
+  updateStorage();
+}
+function updateStorage(){
+  const keys=['weight','exercise','sleep','conditions','medications','appointments','labs','profile','scoreHistory'];
+  let tot=0;keys.forEach(k=>tot+=(localStorage.getItem('hp_'+k)||'').length);
+  document.getElementById('storage-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+    <span>Weight: <strong>${DB.get('weight').length} entries</strong></span><span>Exercise: <strong>${DB.get('exercise').length} logs</strong></span>
+    <span>Sleep: <strong>${DB.get('sleep').length} nights</strong></span><span>Conditions: <strong>${DB.get('conditions').length}</strong></span>
+    <span>Medications: <strong>${DB.get('medications').length}</strong></span><span>Storage: <strong>~${Math.round(tot/1024)} KB</strong></span>
+  </div>`;
+}
+function exportData(){
+  const keys=['weight','exercise','sleep','conditions','medications','appointments','labs','scoreHistory'];
+  const out={profile:DB.obj('profile')};keys.forEach(k=>out[k]=DB.get(k));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='health-data-'+td()+'.json';a.click();toast('📤 Data exported!');
+}
+function clearAll(){
+  if(!confirm('⚠️ This will permanently delete ALL health data. Are you sure?'))return;
+  ['weight','exercise','sleep','nutrition','conditions','medications','appointments','labs','scoreHistory'].forEach(k=>localStorage.removeItem('hp_'+k));
+  toast('🗑️ All data cleared');rDash();updateStorage();
+}
+
+// ── DELETE ────────────────────────────────────────────────────
+function del(key,idx){
+  DB.del(key,idx);toast('🗑️ Entry removed');
+  const m={weight:'weight',exercise:'exercise',sleep:'sleep',conditions:'medical',medications:'medical',appointments:'medical',labs:'medical'};
+  if(m[key])({weight:rWeight,exercise:rExercise,sleep:rSleep,medical:rMedical})[m[key]]?.();
+}
+
+// ── FULL REPORT ───────────────────────────────────────────────
+function rFullReport(){
+  renderFRLabTable();
+  renderFRGeneticTables();
+  renderFRInsights();
+  renderFRLifestyle();
+  renderFRCharts();
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────
+const PRINT_CSS_BASE=`*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#1e293b;padding:20px;margin:0 auto;font-size:13px}
+.card{background:#fff;border-radius:8px;border:1px solid #e2e8f0;padding:14px;margin-bottom:12px;break-inside:avoid}
+.ct{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.ph{margin-bottom:20px}.ph h1{font-size:20px;font-weight:700}.ph p{color:#64748b;font-size:13px;margin-top:5px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:4px 7px;background:#f8fafc;font-weight:600;color:#64748b;font-size:9.5px;text-transform:uppercase;border:1px solid #e2e8f0;white-space:nowrap}
+td{padding:4px 7px;border-bottom:1px solid #f1f5f9;vertical-align:middle;font-size:11.5px}
+.dt th,.dt td{border:1px solid #e2e8f0}
+/* Lab table: very compact to fit 12 columns */
+.lab-table{font-size:10.5px!important;width:100%!important}
+.lab-table th{padding:3px 5px!important;font-size:9px!important}
+.lab-table td{padding:3px 5px!important;font-size:10.5px!important}
+.lab-table .val-badge{padding:1px 5px!important;font-size:9.5px!important;border-radius:3px!important}
+h2{font-size:15px;font-weight:700;margin-bottom:12px}h3{font-size:13px;font-weight:700;margin-bottom:8px}
+.badge,.tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-top:4px}
+.tgr{background:#dcfce7;color:#16a34a}.trd{background:#fee2e2;color:#dc2626}
+.tyw{background:#fef3c7;color:#d97706}.tbl{background:#dbeafe;color:#2563eb}.tgy{background:#f1f5f9;color:#64748b}
+.ok{background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.H{background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.L{background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.nt{color:#cbd5e1;font-size:11px}
+.bg{background:#dcfce7;color:#16a34a}.br{background:#fee2e2;color:#dc2626}.by{background:#fef3c7;color:#d97706}.bb{background:#dbeafe;color:#2563eb}
+.sc{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;break-inside:avoid}
+.sl{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+.sv{font-size:22px;font-weight:700;line-height:1;margin:5px 0 2px}.su{font-size:12px;color:#64748b}
+.dna-sec{display:block!important;margin-bottom:16px}
+img{max-width:100%;height:auto;display:block}
+code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700}
+ul{padding-left:18px;line-height:2}
+.frow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.fico{font-size:18px;width:24px;text-align:center}.finfo{flex:1}
+.fname{font-weight:600;font-size:13px}.fdesc{font-size:11px;color:#64748b}
+.fbarw{width:120px}.fbarbg{background:#f1f5f9;border-radius:10px;height:7px;overflow:hidden}
+.fbarfill{height:7px;border-radius:10px}.fscore{font-size:12px;font-weight:700;min-width:35px;text-align:right}
+@media print{body{padding:0}}`;
+const PRINT_CSS=PRINT_CSS_BASE+`\nbody{max-width:780px}\n@page{margin:12mm 10mm;size:A4}`;
+const PRINT_CSS_LANDSCAPE=PRINT_CSS_BASE+`\nbody{max-width:1200px}\n@page{margin:10mm 12mm;size:A4 landscape}\n.overflow-x-auto{overflow:visible!important}`;
+
+function buildPrintPopup(pageId, docTitle, extraPrep, landscape){
+  if(extraPrep) extraPrep();
+  setTimeout(()=>{
+    const src=document.getElementById(pageId);
+    const clone=src.cloneNode(true);
+    // Convert canvas → PNG so charts survive the copy
+    src.querySelectorAll('canvas').forEach((c,i)=>{
+      const cc=clone.querySelectorAll('canvas')[i];if(!cc)return;
+      const img=document.createElement('img');
+      try{img.src=c.toDataURL('image/png')}catch(e){return}
+      img.style.cssText='max-width:100%;height:auto;display:block;margin:6px 0';
+      cc.parentNode.replaceChild(img,cc);
+    });
+    // Clean up interactive elements
+    clone.querySelectorAll('.no-print,.print-btn,.tabbtn').forEach(el=>el.remove());
+    // Ensure all DNA sections visible
+    clone.querySelectorAll('.dna-sec').forEach(s=>s.style.display='block');
+    // For landscape: remove overflow containers so table spans full width
+    if(landscape){
+      clone.querySelectorAll('[style*="overflow-x"]').forEach(el=>{
+        el.style.overflowX='visible';el.style.width='100%';
+      });
+      // Add lab-table class to the lab results table
+      const labTbl=clone.querySelector('#fr-lab-table');
+      if(labTbl&&labTbl.closest('table'))labTbl.closest('table').classList.add('lab-table');
+    }
+    const css=landscape?PRINT_CSS_LANDSCAPE:PRINT_CSS;
+    const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${docTitle}</title>
+<style>${css}</style></head>
+<body>${clone.innerHTML}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print()},400)});<\/script>
+</body></html>`;
+    // Try popup window
+    try{
+      const w=window.open('about:blank','_blank');
+      if(w&&!w.closed){w.document.write(html);w.document.close();return;}
+    }catch(e){}
+    // Fallback: download as .html — user opens in browser, then prints to PDF
+    const blob=new Blob([html],{type:'text/html'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=docTitle.replace(/[^\w ]/g,'').trim().replace(/\s+/g,'-')+'.html';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),8000);
+    toast('📥 Downloaded as HTML — open the file in your browser and print → Save as PDF');
+  },900);
+}
+
+function printFullReport(){
+  rFullReport();
+  buildPrintPopup('page-fullreport',
+    'Health-Report-Pablo-Rosso-'+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'short'}),
+    null, true);
+}
+
+function printDnaAnalysis(){
+  Object.keys(DNA_FINDINGS).forEach(k=>renderDnaCategory(k));
+  renderDnaInsights();
+  document.querySelectorAll('#page-dnaanalysis .dna-sec').forEach(s=>s.style.display='block');
+  buildPrintPopup('page-dnaanalysis',
+    'DNA-Genetics-Report-Pablo-Rosso-'+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'short'}));
+}
+
+function renderFRLifestyle(){
+  const el=document.getElementById('fr-lifestyle');if(!el||el.dataset.rendered)return;
+  el.dataset.rendered='1';
+  const statusColors={current:'#10b981',stopped:'#94a3b8'};
+  const statusLabels={current:'● Active',stopped:'◼ Stopped'};
+  // Medications table
+  let html=`<div class="card" style="margin-bottom:16px">
+    <div style="font-weight:700;font-size:14px;margin-bottom:14px;color:#8b5cf6">💊 Medications & Supplements History</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead><tr style="border-bottom:2px solid var(--border);background:#f8fafc">
+        <th style="text-align:left;padding:8px 10px;font-weight:600">Name</th>
+        <th style="text-align:left;padding:8px 10px;font-weight:600">Dose</th>
+        <th style="text-align:left;padding:8px 10px;font-weight:600">Period</th>
+        <th style="text-align:left;padding:8px 10px;font-weight:600">Status</th>
+        <th style="text-align:left;padding:8px 10px;font-weight:600">Lab Cross-Reference & Notes</th>
+      </tr></thead>
+      <tbody>${MED_HISTORY.map(m=>`<tr style="border-bottom:1px solid #f1f5f9;vertical-align:top">
+        <td style="padding:8px 10px;font-weight:700">${m.name}</td>
+        <td style="padding:8px 10px;white-space:nowrap">${m.dose}</td>
+        <td style="padding:8px 10px;white-space:nowrap;color:var(--muted);font-size:11.5px">${m.period}</td>
+        <td style="padding:8px 10px;white-space:nowrap"><span style="color:${statusColors[m.status]};font-weight:700;font-size:11px">${statusLabels[m.status]}</span></td>
+        <td style="padding:8px 10px;line-height:1.6;color:var(--txt)">${m.note}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+  // Habits section
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">`;
+  HABITS.forEach(h=>{
+    html+=`<div class="card" style="border-left:4px solid ${h.levelColor}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:24px">${h.icon}</span>
+        <div><div style="font-weight:700;font-size:14px">${h.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${h.detail}</div></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Lab & Genetics Cross-References</div>
+      <ul style="margin:0;padding-left:16px;font-size:12.5px;line-height:2">${h.crossref.map(c=>`<li>${c}</li>`).join('')}</ul>
+    </div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+function trendArrow(vals){
+  const nonNull=vals.filter(v=>v!==null);
+  if(nonNull.length<2)return'<span style="color:#cbd5e1">—</span>';
+  const first=nonNull[0],last=nonNull[nonNull.length-1];
+  const pct=((last-first)/Math.abs(first)*100).toFixed(0);
+  if(last>first*1.05)return`<span style="color:#ef4444;font-weight:700">↑ +${pct}%</span>`;
+  if(last<first*0.95)return`<span style="color:#10b981;font-weight:700">↓ ${pct}%</span>`;
+  return`<span style="color:#94a3b8">→ stable</span>`;
+}
+
+function renderFRLabTable(){
+  const el=document.getElementById('fr-lab-table');if(!el)return;
+  const cats=['Kidney','Electrolytes','Liver','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones','Serology'];
+  const catIcons={Kidney:'🫘',Electrolytes:'⚡',Liver:'🫁',Lipids:'🫀',Metabolic:'🍬',Vitamins:'💊',Inflammation:'🔥','Blood Count':'🩸',Iron:'🔩',Hormones:'⚗️',Serology:'🦠'};
+  let html='';
+  cats.forEach(cat=>{
+    const rows=LAB_RAW.filter(r=>r.cat===cat);
+    if(!rows.length)return;
+    html+=`<tr><td colspan="14" style="background:#f1f5f9;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px">${catIcons[cat]||''} ${cat}</td></tr>`;
+    rows.forEach(r=>{
+      const rangeStr=r.lo!==null&&r.hi!==null?`${r.lo}–${r.hi}`:r.hi!==null?`<${r.hi}`:'—';
+      const cells=r.v.map(val=>{
+        if(val===null)return`<td style="color:#cbd5e1;text-align:center;font-size:13px">—</td>`;
+        const f=flag(val,r.lo,r.hi);
+        if(f==='H')return`<td style="text-align:center"><span class="val-badge" style="background:#fee2e2;color:#b91c1c;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;white-space:nowrap">${val} H</span></td>`;
+        if(f==='L')return`<td style="text-align:center"><span class="val-badge" style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;white-space:nowrap">${val} L</span></td>`;
+        return`<td style="text-align:center"><span class="val-badge" style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:5px;font-size:12px;white-space:nowrap">✓ ${val}</span></td>`;
+      }).join('');
+      html+=`<tr><td style="font-weight:600;font-size:13px">${r.t}</td><td style="color:var(--muted);font-size:11px">${r.u}</td><td style="color:var(--muted);font-size:12px;white-space:nowrap">${rangeStr}</td>${cells}<td style="text-align:center;font-size:12px">${trendArrow(r.v)}</td></tr>`;
+    });
+  });
+  el.innerHTML=html;
+}
+
+function renderFRGeneticTables(){
+  const el=document.getElementById('fr-genetic-grid');if(!el)return;
+  const impC={critical:'#ef4444',high:'#f59e0b',medium:'#4f7ef8',low:'#94a3b8',protective:'#10b981'};
+  const rows=Object.entries(DNA_FINDINGS).map(([key,cat])=>`
+    <div class="card" style="border-top:3px solid ${cat.color};margin-bottom:0">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:${cat.color}">${cat.label}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:3px 6px;color:var(--muted);font-weight:600;font-size:10px">GENE / SNP</th>
+          <th style="text-align:left;padding:3px 6px;color:var(--muted);font-weight:600;font-size:10px">GENO</th>
+          <th style="text-align:left;padding:3px 6px;color:var(--muted);font-weight:600;font-size:10px">IMPACT</th>
+          <th style="text-align:left;padding:3px 6px;color:var(--muted);font-weight:600;font-size:10px">NOTE</th>
+        </tr></thead>
+        <tbody>${cat.snps.map(s=>`<tr style="border-bottom:1px solid #f1f5f9">
+          <td style="padding:5px 6px;vertical-align:top"><strong>${s.gene}</strong><div style="font-size:9px;color:var(--muted)">${s.rs}</div></td>
+          <td style="padding:5px 6px;font-weight:700;font-family:monospace;vertical-align:top">${s.geno}</td>
+          <td style="padding:5px 6px;vertical-align:top"><span style="background:${impC[s.impact]||'#94a3b8'};color:#fff;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;white-space:nowrap">${s.impact}</span></td>
+          <td style="padding:5px 6px;font-size:11px;line-height:1.4;color:var(--txt);vertical-align:top">${s.note.length>120?s.note.substring(0,120)+'…':s.note}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`).join('');
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px">${rows}</div>`;
+}
+
+function renderFRInsights(){
+  const el=document.getElementById('fr-insights');if(!el)return;
+  const priColors={critical:'#ef4444',high:'#f59e0b',medium:'#4f7ef8'};
+  const priLabels={critical:'🔴 Critical Priority',high:'🟡 High Priority',medium:'🔵 Monitor'};
+  el.innerHTML=RAW_INSIGHTS.map((ins,idx)=>`
+    <div class="card" style="border-left:5px solid ${priColors[ins.priority]||'#94a3b8'}">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:28px">${ins.icon}</div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Finding ${idx+1}</div>
+          <div style="font-weight:700;font-size:15px">${ins.title}</div>
+          <span style="background:${priColors[ins.priority]};color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:4px;display:inline-block">${priLabels[ins.priority]}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="background:#fafafa;border:1px solid var(--border);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🔬 Lab Evidence</div>
+          <p style="font-size:13px;line-height:1.6">${ins.lab}</p>
+        </div>
+        <div style="background:#fafafa;border:1px solid var(--border);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🧬 Genetic Factor</div>
+          <p style="font-size:13px;line-height:1.6">${ins.dna}</p>
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-radius:8px;padding:14px;margin-bottom:14px;border:1px solid #dbeafe">
+        <div style="font-size:10px;font-weight:700;color:#1e3a5f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">💡 Integrated Conclusion</div>
+        <p style="font-size:13.5px;line-height:1.7;color:#1e293b">${ins.insight}</p>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:14px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">✅ Recommended Actions</div>
+        <ul style="font-size:13.5px;line-height:2;padding-left:18px;margin:0">${ins.actions.map(a=>`<li>${a}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+}
+
+function renderFRCharts(){
+  const tc=LAB_RAW.find(x=>x.t==='Total Cholesterol').v;
+  const tg=LAB_RAW.find(x=>x.t==='Triglycerides').v;
+  const hdl=LAB_RAW.find(x=>x.t==='HDL Cholesterol').v;
+  const ldl=LAB_RAW.find(x=>x.t==='LDL Cholesterol').v;
+  const vd=LAB_RAW.find(x=>x.t==='Vitamin D').v;
+  const b12=LAB_RAW.find(x=>x.t==='Vitamin B12').v;
+  const bil=LAB_RAW.find(x=>x.t==='Bilirubin Total').v;
+  const ast=LAB_RAW.find(x=>x.t==='AST').v;
+  const alt=LAB_RAW.find(x=>x.t==='ALT').v;
+  const creat=LAB_RAW.find(x=>x.t==='Creatinine').v;
+  const uric=LAB_RAW.find(x=>x.t==='Uric Acid').v;
+
+  kc('frL');
+  const lCtx=document.getElementById('fr-lipidChart')?.getContext('2d');
+  if(lCtx) charts['frL']=new Chart(lCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Total Chol',data:tc,borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'TG',data:tg,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'HDL',data:hdl,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'LDL',data:ldl,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'TC limit 5.0',data:[5,5,5,5,5,5,5,5,5,5],borderColor:'rgba(239,68,68,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TG limit 1.7',data:[1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}}}}}});
+
+  kc('frV');
+  const vCtx=document.getElementById('fr-vitChart')?.getContext('2d');
+  if(vCtx) charts['frV']=new Chart(vCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Vit D',data:vd,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
+    {label:'B12',data:b12,borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
+    {label:'Vit D min',data:[75,75,75,75,75,75,75,75],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'B12 max',data:[652,652,652,652,652,652,652,652],borderColor:'rgba(79,126,248,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{
+    y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Vit D',font:{size:10}}},
+    y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'B12',font:{size:10}}}
+  }}});
+
+  kc('frLiv');
+  const livCtx=document.getElementById('fr-liverChart')?.getContext('2d');
+  if(livCtx) charts['frLiv']=new Chart(livCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Bilirubin',data:bil,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'AST×100',data:ast.map(v=>v?v*100:null),borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'ALT×100',data:alt.map(v=>v?v*100:null),borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'Bil limit 21',data:[21,21,21,21,21,21,21,21],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}}}}}});
+
+  kc('frK');
+  const kCtx=document.getElementById('fr-kidneyChart')?.getContext('2d');
+  if(kCtx) charts['frK']=new Chart(kCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Creatinine',data:creat,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
+    {label:'Uric Acid',data:uric,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
+    {label:'Creat limit 110',data:[110,110,110,110,110,110,110,110],borderColor:'rgba(16,185,129,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{
+    y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Creatinine',font:{size:10}}},
+    y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Uric Acid',font:{size:10}}}
+  }}});
+}
+
+// ── LAB ANALYSIS ─────────────────────────────────────────────
+const LAB_DATES = ['Feb 2023','Jul 2023','Mar 2024','Oct 2024','Feb 2025','Jul 2025','Oct 2025','Dec 2025','May 2026','Jun 2026'];
+const LAB_RAW = [
+  // Kidney
+  {t:'Urea',u:'mmol/L',v:[null,null,null,5.2,7.6,null,5.2,null,5.5,null],lo:2.8,hi:8.1,cat:'Kidney'},
+  {t:'Creatinine',u:'µmol/L',v:[null,null,111,112,88,null,91,null,107,null],lo:62,hi:110,cat:'Kidney'},
+  {t:'Uric Acid',u:'µmol/L',v:[409,null,314,316,422,null,322,null,383,null],lo:202,hi:420,cat:'Kidney'},
+  {t:'GFR CKD-EPI',u:'ml/s/1.73m²',v:[null,null,1.50,1.17,1.57,null,1.50,null,1.23,null],lo:1.0,hi:3.0,cat:'Kidney'},
+  // Electrolytes
+  {t:'Sodium',u:'mmol/L',v:[null,null,140,140,136,null,140,null,141,null],lo:136,hi:145,cat:'Electrolytes'},
+  {t:'Potassium',u:'mmol/L',v:[null,null,4.6,4.6,5.1,4.3,4.3,null,4.97,4.7],lo:3.5,hi:5.1,cat:'Electrolytes'},
+  {t:'Chloride',u:'mmol/L',v:[null,null,105,105,100,null,102,null,106,null],lo:97,hi:108,cat:'Electrolytes'},
+  {t:'Magnesium',u:'mmol/L',v:[null,null,null,null,null,null,null,null,0.96,null],lo:0.66,hi:1.07,cat:'Electrolytes'},
+  // Liver
+  {t:'Bilirubin Total',u:'µmol/L',v:[27.2,null,27.2,17.1,19.2,null,27.1,null,26.9,null],lo:0,hi:21,cat:'Liver'},
+  {t:'ALT',u:'µkat/L',v:[0.42,0.59,0.59,0.50,0.55,null,0.54,0.60,0.62,0.52],lo:0.10,hi:0.78,cat:'Liver'},
+  {t:'AST',u:'µkat/L',v:[0.40,0.56,0.56,1.08,0.58,null,0.66,0.52,0.58,0.47],lo:0.10,hi:0.72,cat:'Liver'},
+  {t:'GGT',u:'µkat/L',v:[0.47,null,0.47,0.32,0.33,null,0.48,null,0.43,null],lo:0.17,hi:1.19,cat:'Liver'},
+  {t:'ALP',u:'µkat/L',v:[1.53,null,1.53,1.50,1.69,null,1.64,null,1.64,null],lo:0.67,hi:2.28,cat:'Liver'},
+  // Lipids
+  {t:'Total Cholesterol',u:'mmol/L',v:[5.49,5.70,5.76,4.74,6.0,5.70,6.53,7.05,5.93,5.69],lo:2.9,hi:5.0,cat:'Lipids'},
+  {t:'HDL Cholesterol',u:'mmol/L',v:[1.44,1.13,1.43,1.29,1.38,null,1.43,1.14,1.24,1.29],lo:1.0,hi:2.1,cat:'Lipids'},
+  {t:'LDL Cholesterol',u:'mmol/L',v:[3.45,2.97,3.61,2.33,3.61,3.45,null,3.73,4.13,2.87],lo:1.2,hi:3.0,cat:'Lipids'},
+  {t:'Non-HDL Cholesterol',u:'mmol/L',v:[4.05,4.57,4.33,3.45,4.65,4.30,null,5.91,4.7,4.30],lo:null,hi:3.80,cat:'Lipids'},
+  {t:'Triglycerides',u:'mmol/L',v:[2.04,4.74,1.94,2.58,0.95,null,3.30,null,1.44,null],lo:0.45,hi:1.70,cat:'Lipids'},
+  {t:'Lp(a)',u:'nmol/L',v:[null,null,null,null,null,null,9.6,null,null,23.3],lo:0,hi:75,cat:'Lipids'},
+  {t:'Homocysteine',u:'µmol/L',v:[null,null,null,null,null,null,null,null,7.33,null],lo:5.40,hi:16.20,cat:'Lipids'},
+  // Metabolic
+  {t:'Glucose',u:'mmol/L',v:[null,null,4.7,4.7,4.3,null,4.4,null,4.31,4.4],lo:3.9,hi:5.6,cat:'Metabolic'},
+  {t:'HbA1c',u:'mmol/mol',v:[null,null,null,null,31,null,null,30,null,null],lo:20,hi:42,cat:'Metabolic'},
+  // Vitamins
+  {t:'Vitamin D',u:'nmol/L',v:[null,null,105.0,105.0,88.9,null,91.8,75.5,97.4,null],lo:75,hi:125,cat:'Vitamins'},
+  {t:'Vitamin B12',u:'pmol/L',v:[null,null,882,882,null,null,842,891,745.7,null],lo:138,hi:652,cat:'Vitamins'},
+  {t:'Folate',u:'nmol/L',v:[null,null,16.9,16.9,null,null,19.1,16.8,27.6,26.6],lo:7.0,hi:70.2,cat:'Vitamins'},
+  // Inflammation
+  {t:'CRP',u:'mg/L',v:[null,null,null,1.2,3.0,null,1.2,0.7,4.2,null],lo:0,hi:5.0,cat:'Inflammation'},
+  {t:'hsCRP (CV risk)',u:'mg/L',v:[null,null,null,null,null,null,null,null,4.2,null],lo:0,hi:1.0,cat:'Inflammation'},
+  {t:'ESR',u:'mm/h',v:[null,null,null,7,7,null,7,null,null,null],lo:2,hi:28,cat:'Inflammation'},
+  // Blood Count
+  {t:'WBC',u:'10⁹/L',v:[null,null,6.5,6.5,6.4,null,7.5,7.5,5.2,8.1],lo:4.0,hi:10.0,cat:'Blood Count'},
+  {t:'RBC',u:'10¹²/L',v:[null,null,4.68,4.68,4.59,null,4.98,4.98,4.61,4.79],lo:4.00,hi:5.80,cat:'Blood Count'},
+  {t:'Hemoglobin',u:'g/L',v:[null,null,147,147,144,null,162,162,149,152],lo:135,hi:175,cat:'Blood Count'},
+  {t:'Hematocrit',u:'l/l',v:[null,null,0.436,0.436,0.428,null,0.462,0.462,0.446,0.446],lo:0.400,hi:0.500,cat:'Blood Count'},
+  {t:'MCV',u:'fl',v:[null,null,93.2,93.2,93.2,null,92.8,92.8,96.7,93.1],lo:82,hi:98,cat:'Blood Count'},
+  {t:'Platelets',u:'10⁹/L',v:[null,null,284,284,279,null,269,269,276,296],lo:150,hi:400,cat:'Blood Count'},
+  {t:'Neutrophils',u:'%',v:[null,null,42.4,42.4,59.2,null,56.1,56.1,null,55.3],lo:45,hi:70,cat:'Blood Count'},
+  {t:'Lymphocytes',u:'%',v:[null,null,48.1,48.1,32.2,null,34.6,34.6,null,35.7],lo:20,hi:45,cat:'Blood Count'},
+  // Iron
+  {t:'Iron (Fe)',u:'µmol/L',v:[null,null,null,null,null,null,null,null,15.4,null],lo:10.6,hi:28.3,cat:'Iron'},
+  {t:'Ferritin',u:'µg/L',v:[null,null,null,null,null,null,null,null,250.15,null],lo:21.80,hi:274.70,cat:'Iron'},
+  {t:'Transferrin',u:'g/L',v:[null,null,null,null,null,null,null,null,2.40,null],lo:2.00,hi:3.60,cat:'Iron'},
+  {t:'Transferrin Sat.',u:'%',v:[null,null,null,null,null,null,null,null,26,null],lo:20,hi:50,cat:'Iron'},
+  // Hormones
+  {t:'TSH',u:'mU/L',v:[1.100,null,null,2.350,1.200,null,null,2.130,null,1.850],lo:0.270,hi:4.200,cat:'Hormones'},
+  {t:'PSA',u:'µg/L',v:[null,null,null,0.717,1.040,null,null,null,null,null],lo:0,hi:2.000,cat:'Hormones'},
+  {t:'Testosterone',u:'nmol/L',v:[null,null,null,20.70,null,null,null,22.10,24.29,null],lo:8.64,hi:29.00,cat:'Hormones'},
+  {t:'FSH',u:'U/L',v:[null,null,null,null,null,null,null,null,2.9,null],lo:1.0,hi:12.0,cat:'Hormones'},
+  {t:'LH',u:'U/L',v:[null,null,null,null,null,null,null,null,3.2,null],lo:0.6,hi:12.0,cat:'Hormones'},
+  {t:'SHBG',u:'nmol/L',v:[null,null,null,null,null,null,null,null,33.4,null],lo:17.0,hi:78.0,cat:'Hormones'},
+  {t:'Cortisol',u:'nmol/L',v:[null,null,null,null,null,null,null,437.0,364.3,null],lo:166,hi:507,cat:'Hormones'},
+  // Serology (EUC Laboratoře — Infekční serologie)
+  // EBV: VCA IgG + EBNA IgG positive = past infection (normal in >90% adults). VCA IgM negative = no active EBV.
+  {t:'EBV VCA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,79.37],lo:0,hi:18.0,cat:'Serology'},
+  {t:'EBV VCA IgM',u:'index',v:[null,null,null,null,null,null,null,null,null,0.17],lo:0,hi:0.90,cat:'Serology'},
+  {t:'EBV EBNA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,68.57],lo:0,hi:18.0,cat:'Serology'},
+  {t:'EBV EA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,11.12],lo:0,hi:18.0,cat:'Serology'},
+  // Borrelia IgM persistently POSITIVE across all tests — lab note: "suspektní aktivní infekce"
+  {t:'Borrelia IgM',u:'U/mL',v:[null,null,25.01,26.96,null,null,null,34.06,null,30.28],lo:0,hi:16.0,cat:'Serology'},
+  {t:'Borrelia IgG',u:'U/mL',v:[null,null,0.81,1.31,null,null,null,0.47,null,0.42],lo:0,hi:18.0,cat:'Serology'},
+];
+
+// ── MEDICATIONS & LIFESTYLE ────────────────────────────────────
+const MED_HISTORY = [
+  {name:'Lipanthyl (Fenofibrate)',dose:'145 mg',freq:'Daily',period:'Before 2024',status:'stopped',reason:'Lipid management (TG/Cholesterol)',
+   note:'Fibrate — lowers triglycerides and LDL, raises HDL. ⚠️ Notably, TG still spiked to 4.74 mmol/L in Jul 2023 WHILE on this medication, suggesting APOA5 genetic variant + alcohol overcame pharmacological control. Stopped 2024.'},
+  {name:'Finasteride',dose:'1 mg',freq:'Daily',period:'~Nov 2025 – present',status:'current',reason:'Androgenic alopecia (hair loss)',
+   note:'5α-reductase inhibitor — reduces DHT by ~70%. ⚠️ PSA lab values are artificially halved by finasteride — multiply measured PSA by 2 to estimate true level (Oct 2024: true PSA ~1.43; Feb 2025: ~2.08 — still normal but context matters). Explains the May 2026 FSH/LH/SHBG/Testosterone panel ordered to monitor hormonal status.'},
+  {name:'Revihair',dose:'1 capsule',freq:'Daily',period:'~Nov 2025 – present',status:'current',reason:'Hair loss nutritional support',
+   note:'Contains: L-cysteine 83mg, L-methionine 153mg, L-tyrosine 76mg, Biotin 100µg, Vit D3 500IU, Iron 3mg, Zinc 5mg, B6 7.5mg, Pantothenic acid 20mg. ✅ The 500IU D3 likely contributed to Vitamin D recovery (75.5→97.4 nmol/L Dec 2025→May 2026). Biotin 100µg/day is below the threshold that typically interferes with immunoassays (concern begins at ~5000µg), so lab interference is unlikely at this dose.'},
+  {name:'Vitamin C',dose:'500–1000 mg',freq:'Daily',period:'2024 – present',status:'current',reason:'Antioxidant support',
+   note:'Supports glutathione recycling — particularly relevant for GSTP1 +/- variant (reduced detox capacity). Good antioxidant complement to SOD2 +/+ weakness.'},
+  {name:'Magnesium',dose:'(supplement, form unspecified)',freq:'Daily',period:'2024 – present',status:'current',reason:'Muscle recovery, sleep, general health',
+   note:'✅ Serum magnesium 0.96 mmol/L (May 2026) is well within range — this supplementation is working. Magnesium also supports Vitamin D activation and BHMT pathway (methylation).'},
+  {name:'Creatine',dose:'(standard loading not specified)',freq:'Daily',period:'2024 – present',status:'current',reason:'Athletic performance, muscle recovery',
+   note:'⚠️ KEY LAB INTERPRETATION: Creatine supplementation increases creatinine production by ~10–30 µmol/L as a normal metabolic byproduct. Your creatinine (88–112 µmol/L) may appear borderline-high partly due to this — actual kidney filtration may be better than indicated. GFR may be mildly underestimated. This is reassuring context for the CKD-G2 staging.'},
+  {name:'Extra Virgin Olive Oil',dose:'20–30 ml',freq:'Daily',period:'Ongoing',status:'current',reason:'Cardiovascular health, anti-inflammatory',
+   note:'✅ Rich in oleic acid and polyphenols (oleocanthal is a natural COX inhibitor). Cardioprotective: supports HDL function, reduces LDL oxidation, lowers inflammatory markers. Good complementary habit for the lipid/inflammation profile.'},
+];
+
+
+const HEALTH_EVENTS = [
+  {
+    date_start: '2026-09-13',
+    date_end:   '2026-09-17',
+    name:       'Influenza-like illness (flu)',
+    severity:   'Moderate',
+    status:     'Resolved',
+    tests:      'Bacterial culture: negative · COVID-19 rapid test: negative',
+    treatment:  'Symptomatic only — no antibiotics prescribed',
+    notes:      'Strong flu symptoms lasting ~5 days (13–17 Sep 2026). Tested negative for COVID-19 and bacterial infection. Managed with rest and symptomatic relief. Full recovery by Sep 17.'
+  }
+];
+
+const HABITS = [
+  {icon:'🍺',name:'Alcohol',level:'moderate',levelColor:'#f59e0b',
+   detail:'~1 beer/day average; significantly more on weekends.',
+   crossref:['TG volatility: alcohol directly raises triglycerides via hepatic VLDL overproduction. Your APOA5 CG variant makes you genetically ~3× more TG-sensitive to alcohol than average. The Jul 2023 TG spike to 4.74 mmol/L (while on Lipanthyl!) is most likely a weekend/holiday alcohol episode.',
+             'Methylation: alcohol depletes betaine, B12 cofactors, and BHMT enzyme — your main methylation backup pathway. Despite this, homocysteine (7.33) is currently holding.',
+             'Inflammation: alcohol elevates hsCRP and drives the oxidative load that SOD2 +/+ struggles to clear. Major contributor to the 4.2 mg/L hsCRP finding.',
+             'ADH1B CC variant: alcohol metabolises more slowly — longer acetaldehyde exposure per drink than most people.']},
+  {icon:'🚬',name:'Nicotine pouches',level:'high-risk',levelColor:'#ef4444',
+   detail:'4mg nicotine pouches — ~2/day weekdays, more on weekends. No combustion.',
+   crossref:['Cardiovascular: nicotine acutely raises BP and heart rate, promotes platelet aggregation, and causes endothelial inflammation. Combined with LDL 4.13 + hsCRP 4.2 + SLCO1B1 statin risk, this is a significant composite cardiovascular risk multiplier.',
+             'Inflammation: nicotine pouches have been shown to elevate hsCRP, hs-IL6, and other inflammatory markers even without combustion products. Likely contributor to 4.2 mg/L hsCRP.',
+             'Note: pouches carry substantially less harm than smoking (no CO, no tar) but nicotine itself carries meaningful CV risk, especially in the context of already elevated lipids.',
+             'Positive: no combustion means no impact on lung function or carbon monoxide-related RBC issues.']},
+];
+
+function flag(val,lo,hi){
+  if(val===null)return'nt';
+  if(hi!==null&&val>hi)return'H';
+  if(lo!==null&&val<lo)return'L';
+  return'ok';
+}
+
+function labTab(sec,btn){
+  document.querySelectorAll('.lab-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('lab-'+sec).style.display='block';
+  btn.classList.add('active');
+  if(sec==='table')renderLabTable();
+}
+
+function rLabAnalysis(){
+  renderLabCharts();
+  renderLabTable();
+}
+
+function renderLabCharts(){
+  // Lipid chart
+  kc('lipid');
+  const lipidCtx=document.getElementById('lipidChart')?.getContext('2d');
+  if(!lipidCtx)return;
+  const tc=LAB_RAW.find(x=>x.t==='Total Cholesterol').v;
+  const tg=LAB_RAW.find(x=>x.t==='Triglycerides').v;
+  const hdl=LAB_RAW.find(x=>x.t==='HDL Cholesterol').v;
+  const ldl=LAB_RAW.find(x=>x.t==='LDL Cholesterol').v;
+  charts['lipid']=new Chart(lipidCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Total Chol',data:tc,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.05)',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'Triglycerides',data:tg,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'HDL',data:hdl,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'LDL',data:ldl,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
+    {label:'TC Limit',data:[5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0],borderColor:'rgba(239,68,68,.3)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TG Limit',data:[1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7],borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:11}}}}}});
+
+  // Liver chart
+  kc('liver');
+  const liverCtx=document.getElementById('liverChart')?.getContext('2d');
+  if(!liverCtx)return;
+  const bil=LAB_RAW.find(x=>x.t==='Bilirubin Total').v;
+  const ast=LAB_RAW.find(x=>x.t==='AST').v;
+  const alt=LAB_RAW.find(x=>x.t==='ALT').v;
+  // Normalize bilirubin to % of limit for comparison
+  charts['liver']=new Chart(liverCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Bilirubin (µmol/L)',data:bil,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,yAxisID:'y',spanGaps:true},
+    {label:'AST (×100 µkat/L)',data:ast.map(v=>v?v*100:null),borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,yAxisID:'y',spanGaps:true},
+    {label:'ALT (×100 µkat/L)',data:alt.map(v=>v?v*100:null),borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,yAxisID:'y',spanGaps:true},
+  ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10}}}}}});
+
+  // Vitamin chart
+  kc('vit');
+  const vitCtx=document.getElementById('vitChart')?.getContext('2d');
+  if(!vitCtx)return;
+  const vd=LAB_RAW.find(x=>x.t==='Vitamin D').v;
+  const b12=LAB_RAW.find(x=>x.t==='Vitamin B12').v;
+  charts['vit']=new Chart(vitCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Vit D (nmol/L)',data:vd,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
+    {label:'B12 (pmol/L)',data:b12,borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
+    {label:'Vit D min (75)',data:[75,75,75,75,75,75,75,75],borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'B12 max (652)',data:[652,652,652,652,652,652,652,652],borderColor:'rgba(79,126,248,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
+  ]},options:{plugins:{legend:{labels:{font:{size:10},boxWidth:10}}},animation:false,scales:{
+    y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Vit D',font:{size:10}}},
+    y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'B12',font:{size:10}}}
+  }}});
+
+  // Kidney chart
+  kc('kidney');
+  const kidCtx=document.getElementById('kidneyChart')?.getContext('2d');
+  if(!kidCtx)return;
+  const creat=LAB_RAW.find(x=>x.t==='Creatinine').v;
+  const uric=LAB_RAW.find(x=>x.t==='Uric Acid').v;
+  charts['kidney']=new Chart(kidCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
+    {label:'Creatinine (µmol/L)',data:creat,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
+    {label:'Uric Acid (µmol/L)',data:uric,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
+    {label:'Creat limit (110)',data:[110,110,110,110,110,110,110,110],borderColor:'rgba(16,185,129,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+  ]},options:{plugins:{legend:{labels:{font:{size:10},boxWidth:10}}},animation:false,scales:{
+    y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Creatinine',font:{size:10}}},
+    y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Uric Acid',font:{size:10}}}
+  }}});
+}
+
+function renderLabTable(){
+  const cats=['Kidney','Electrolytes','Liver','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones'];
+  let html='';
+  cats.forEach(cat=>{
+    const rows=LAB_RAW.filter(r=>r.cat===cat);
+    html+=`<tr><td colspan="11" style="background:#f8fafc;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px">${cat}</td></tr>`;
+    rows.forEach(r=>{
+      const rangeStr=r.lo!==null?`${r.lo}–${r.hi}`:(r.hi!==null?`<${r.hi}`:'—');
+      const cells=r.v.map(val=>{
+        if(val===null)return`<td style="color:#cbd5e1;text-align:center">—</td>`;
+        const f=flag(val,r.lo,r.hi);
+        if(f==='H')return`<td style="text-align:center"><span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600">${val} H</span></td>`;
+        if(f==='L')return`<td style="text-align:center"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600">${val} L</span></td>`;
+        return`<td style="text-align:center;color:var(--txt)">${val}</td>`;
+      }).join('');
+      html+=`<tr><td><strong>${r.t}</strong></td><td style="color:var(--muted);font-size:12px">${r.u}</td><td style="color:var(--muted);font-size:12px">${rangeStr}</td>${cells}</tr>`;
+    });
+  });
+  document.getElementById('lab-full-table').innerHTML=html;
+}
+
+// ── DNA ANALYSIS (RAW GENOTYPE DATA — MyHeritage ~609K SNPs) ──
+const DNA_FINDINGS = {
+  cardiovascular:{label:'❤️ Cardiovascular & Lipids',color:'#ef4444',snps:[
+    {gene:'APOA5/ZPR1',rs:'rs964184',geno:'CG',impact:'high',note:'One G risk allele → strong triglyceride elevation contributor. APOA5 regulates TG-rich lipoprotein clearance. Explains your volatile TG pattern (1.94→3.30→1.44 mmol/L). Confirmed directly from raw DNA.'},
+    {gene:'LPA (Lipoprotein-a)',rs:'rs3798220',geno:'CT',impact:'high',note:'One T risk allele → elevated Lp(a) risk. Lp(a) is an INDEPENDENT cardiovascular risk factor not measured in standard panels. Genetically determined and cannot be lowered by lifestyle. Request Lp(a) blood test from your doctor.'},
+    {gene:'SLCO1B1 (statin transport)',rs:'rs4149056',geno:'CT',impact:'critical',note:'⚠️ CLINICALLY URGENT: CT = one *5 loss-of-function allele = significantly increased statin myopathy risk. Statins accumulate in muscle → muscle damage. If statins are ever considered for your rising LDL/cholesterol, this MUST be disclosed to your prescriber first.'},
+    {gene:'HMGCR (statin target)',rs:'rs17238484',geno:'GT',impact:'medium',note:'One T allele = reduced statin efficacy. HMGCR is the enzyme statins inhibit. Your variant means statins may work less effectively. Relevant context if lipid medication is discussed.'},
+    {gene:'APOE region',rs:'rs7412',geno:'CT',impact:'medium',note:'Partial APOE data — rs429358 not on MyHeritage chip. rs7412=CT suggests likely ε2/ε3 or ε3/ε4 — cannot confirm ε4 status. Clinical APOE genotyping recommended given rising LDL trend.'},
+    {gene:'AGTR1 (AT1 receptor)',rs:'rs5186',geno:'AC',impact:'low',note:'One C allele = mild increased angiotensin receptor sensitivity. Minor cardiovascular/blood pressure risk variant. Monitor blood pressure regularly.'},
+    {gene:'Factor V Leiden',rs:'rs6025',geno:'CC',impact:'protective',note:'✅ NORMAL — No Factor V Leiden mutation. No genetic thrombosis (clotting) risk from this gene.'},
+    {gene:'Prothrombin G20210A',rs:'rs1799963',geno:'GG',impact:'protective',note:'✅ NORMAL — No prothrombin mutation. No genetic thrombophilia.'},
+  ]},
+  metabolism:{label:'⚖️ Metabolism & Weight',color:'#f59e0b',snps:[
+    {gene:'FTO (appetite/weight)',rs:'rs9939609',geno:'AA',impact:'high',note:'HOMOZYGOUS RISK: AA = highest-risk genotype, associated with ~1.7 kg higher body weight and increased appetite/reduced satiety. Does not determine destiny — aerobic exercise is the most powerful intervention to neutralize FTO risk. High-protein diet helps with satiety.'},
+    {gene:'TCF7L2 (T2DM)',rs:'rs7903146',geno:'CC',impact:'protective',note:'✅ PROTECTIVE: CC = lowest risk genotype for type 2 diabetes. Consistent with your excellent HbA1c (30–31) and normal glucose (4.31–4.7 mmol/L).'},
+    {gene:'MTNR1B (glucose/sleep)',rs:'rs10830963',geno:'CC',impact:'protective',note:'✅ NORMAL melatonin-insulin signaling. No melatonin-mediated glucose dysregulation. Sleep quality still matters for metabolic health.'},
+    {gene:'ADH1B (alcohol)',rs:'rs1229984',geno:'CC',impact:'medium',note:'CC = slow alcohol dehydrogenase → alcohol lingers longer before clearance. Extended effects from even moderate amounts. Directly relevant — alcohol is a key TG driver given your APOA5 variant.'},
+  ]},
+  methylation:{label:'🔵 Methylation & B-Vitamins',color:'#8b5cf6',snps:[
+    {gene:'MTHFR C677T',rs:'rs1801133',geno:'GG',impact:'protective',note:'✅ NORMAL (GG confirmed in raw DNA). This is the most clinically impactful methylation gene. No major homocysteine risk from this variant. Your homocysteine of 7.33 µmol/L (measured May 2026) confirms functional methylation is working well.'},
+    {gene:'MTHFR A1298C',rs:'rs1801131',geno:'GT',impact:'medium',note:'Heterozygous (GT confirmed raw). Mildly reduces BH4 production — a cofactor for serotonin, dopamine, and nitric oxide synthesis. May contribute to subtle mood or energy effects under stress.'},
+    {gene:'BHMT (rs567754)',rs:'rs567754',geno:'TT',impact:'high',note:'HOMOZYGOUS (TT confirmed raw). BHMT is your methylation "shortcut" — converts homocysteine → methionine via betaine. Triple BHMT homozygosity means heavy reliance on this stress-sensitive pathway.'},
+    {gene:'BHMT (rs617219)',rs:'rs617219',geno:'AA',impact:'high',note:'HOMOZYGOUS (AA confirmed raw). Second BHMT variant. Combined with rs567754 and rs651852, amplifies shortcut pathway dependence. Stress, alcohol, and poor diet deplete betaine.'},
+    {gene:'BHMT (rs651852)',rs:'rs651852',geno:'AA',impact:'high',note:'HOMOZYGOUS (AA confirmed raw). Third BHMT variant. Triple +/+ confirmed directly from raw DNA — not inferred. Betaine-rich foods (beets, spinach, quinoa) are particularly important for you.'},
+    {gene:'CBS A360A',rs:'rs1801181',geno:'AA',impact:'high',note:'HOMOZYGOUS (confirmed raw). Faster transsulfuration: homocysteine → taurine pathway is upregulated. May deplete BH4 and lead to sulfur sensitivity. Your normal homocysteine (7.33) suggests compensation is working — maintain with good diet.'},
+    {gene:'MTRR A66G',rs:'rs1801394',geno:'AG',impact:'medium',note:'Heterozygous (AG confirmed raw). Reduced B12 recycling efficiency (methionine synthase reductase). Your B12 is still elevated at 745.7 pmol/L — likely pooling rather than cycling. Improving trend (was 891). Homocysteine being normal is very reassuring.'},
+  ]},
+  detox:{label:'🧹 Detox & Antioxidant',color:'#f97316',snps:[
+    {gene:'SOD2 A16V',rs:'rs4880',geno:'GG',impact:'critical',note:'⚠️ HOMOZYGOUS CRITICAL (GG confirmed raw). SOD2 is your PRIMARY mitochondrial antioxidant enzyme. +/+ variant impairs targeting/efficiency → increased mitochondrial ROS → promotes LDL oxidation. Most significant detox finding. CoQ10 is the most evidence-based support for SOD2 dysfunction.'},
+    {gene:'GSTP1 I105V',rs:'rs1695',geno:'AG',impact:'high',note:'Heterozygous (AG confirmed raw). GSTP1 conjugates glutathione to toxins for removal. Reduced activity → decreased clearance of carcinogens and oxidative byproducts. Combined with A114V below, detox capacity is meaningfully reduced.'},
+    {gene:'GSTP1 A114V',rs:'rs1138272',geno:'CT',impact:'high',note:'Heterozygous (CT confirmed raw). Second GSTP1 variant. Dual GSTP1 variants compound the reduction in glutathione-S-transferase Pi activity. Prioritize antioxidant-rich diet; minimize toxic exposures (pesticides, processed food additives).'},
+    {gene:'CYP1A2 164A>C',rs:'rs762551',geno:'AA',impact:'medium',note:'HOMOZYGOUS (AA confirmed raw). Primary caffeine-metabolizing enzyme. AA = ultra-rapid inducible metabolism — you likely feel caffeine effects less. Also processes polycyclic aromatic hydrocarbons from grilled/smoked foods.'},
+    {gene:'CYP1B1 L432V',rs:'rs1056836',geno:'GG',impact:'high',note:'HOMOZYGOUS (GG confirmed raw). Alters estrogen/testosterone hydroxylation toward the 4-hydroxy pathway. Long-term hormonal balance consideration. Support with DIM from cruciferous vegetables (broccoli, Brussels sprouts).'},
+    {gene:'NAT2 (slow acetylator)',rs:'rs1801280+rs1208',geno:'Hetero×2',impact:'medium',note:'Two NAT2 slow acetylator variants confirmed. Slower drug detox (isoniazid, sulfonamides). Impaired clearance of aromatic amines from processed meat and tobacco. Inform prescribers of slow acetylator status.'},
+  ]},
+  vitamins:{label:'☀️ Vitamins & Nutrients',color:'#06b6d4',snps:[
+    {gene:'CYP2R1 (Vit D 25-OH)',rs:'rs10741657',geno:'AG',impact:'medium',note:'Heterozygous (AG confirmed raw). Reduced conversion of Vitamin D to its active circulating form (25-OH-D). Vitamin D recovered to 97.4 nmol/L in May 2026 — keep monitoring and maintaining current supplementation.'},
+    {gene:'DHCR7 (Vit D skin)',rs:'rs12785878',geno:'GT',impact:'medium',note:'Heterozygous (GT confirmed raw). Reduced skin synthesis of Vitamin D from sunlight. Combined with CYP2R1, you have two genetic reasons why Vitamin D requires active management.'},
+    {gene:'VDR Bsm',rs:'rs1544410',geno:'AG',impact:'medium',note:'Heterozygous +/-. Even when serum Vitamin D is in range, VDR variants reduce cellular response efficiency. VDR also activates dopamine-synthesizing enzymes — low-end D may affect mood and energy.'},
+    {gene:'VDR Taq',rs:'rs731236',geno:'AG',impact:'medium',note:'Heterozygous +/-. Second VDR variant. Combined with VDR Bsm, receptor efficiency is at the lower end. Target D levels of 90–120 nmol/L given your receptor variants.'},
+    {gene:'FADS1 (omega-3 conversion)',rs:'rs174537',geno:'GT',impact:'high',note:'Heterozygous (GT confirmed raw). CRITICAL for supplementation: FADS1 converts plant ALA → EPA/DHA. Your variant reduces this conversion significantly. Plant omega-3 (flaxseed, walnuts) is largely wasted. You need pre-formed EPA/DHA from marine sources or algae supplements — highly relevant for your TG and CV management.'},
+    {gene:'HFE H63D (iron)',rs:'rs1799945',geno:'CG',impact:'low',note:'Iron carrier variant. Your ferritin is 250.15 µg/L (normal range, but upper half). Monitor ferritin over time; avoid unnecessary iron supplementation.'},
+  ]},
+  brain:{label:'🧠 Brain, Mood & Neurotransmitters',color:'#8b5cf6',snps:[
+    {gene:'BDNF Val66Met',rs:'rs6265',geno:'CT',impact:'medium',note:'One Met allele. Reduces activity-dependent BDNF secretion — the brain\'s primary growth factor supporting learning, memory, and mood. Regular aerobic exercise is the most powerful way to boost BDNF and overcome this variant.'},
+    {gene:'COMT V158M',rs:'rs4680',geno:'GG',impact:'protective',note:'✅ NORMAL (GG = Val/Val). Efficient dopamine and epinephrine breakdown. No hypersensitivity to stress, no methyl-donor overload from this gene. Favorable neurotransmitter profile.'},
+    {gene:'ADD1 (salt/BP)',rs:'rs4961',geno:'GG',impact:'protective',note:'✅ NORMAL — No salt-sensitive hypertension from ADD1 variant. Blood pressure regulation via salt intake is genetically standard.'},
+    {gene:'MTHFR A1298C (BH4)',rs:'rs1801131',geno:'GT',impact:'medium',note:'Mild BH4 reduction (see Methylation tab). BH4 is a cofactor for serotonin and dopamine synthesis. May contribute to subtle mood regulation sensitivity under stress. Magnesium supports BH4.'},
+  ]},
+  drugmeta:{label:'💊 Drug & Alcohol Metabolism',color:'#ec4899',snps:[
+    {gene:'SLCO1B1 *5 (statin)',rs:'rs4149056',geno:'CT',impact:'critical',note:'⚠️ CRITICAL (CT confirmed raw). One *5 loss-of-function allele = reduced hepatic statin uptake → statins pool in muscle → MYOPATHY RISK. This is the most clinically actionable pharmacogenomic finding. If statins are ever prescribed: rosuvastatin and pravastatin are less affected by SLCO1B1; simvastatin/atorvastatin are highest risk. Pharmacogenomic testing before any statin is strongly advised.'},
+    {gene:'CYP2D6 S486T',rs:'rs1135840',geno:'CT',impact:'medium',note:'Heterozygous (CT confirmed raw). CYP2D6 metabolizes ~25% of all drugs including antidepressants (SSRIs, TCAs), beta-blockers, codeine, opioids, tamoxifen. Always inform prescribers — pharmacogenomic testing before new medications is advisable.'},
+    {gene:'ALDH2 (acetaldehyde)',rs:'rs671',geno:'GG',impact:'protective',note:'✅ NORMAL — Efficient acetaldehyde clearance. No Asian-flush phenotype. Alcohol eventually clears normally, though ADH1B still causes slower initial conversion.'},
+    {gene:'ADH1B (alcohol)',rs:'rs1229984',geno:'CC',impact:'medium',note:'CC = slow alcohol dehydrogenase — alcohol lingers longer before initial conversion to acetaldehyde. Extended intoxication effects. Important context: alcohol is a major TG driver and your APOA5 variant amplifies this.'},
+    {gene:'CYP1A2 (caffeine/drugs)',rs:'rs762551',geno:'AA',impact:'medium',note:'HOMOZYGOUS ultra-rapid — see Detox tab. Also affects metabolism of some medications; always inform prescribers.'},
+  ]}
+};
+
+const RAW_INSIGHTS=[
+  {icon:'🦠',title:'Borrelia IgM Positive — Suspected Active Lyme Infection',priority:'critical',
+   lab:'Borrelia IgM: 30.28 U/mL (ref 0–16) — POSITIVE (Jun 2026). Lab comment: "Borrelia — suspektní aktivní infekce" (suspected active infection). Borrelia IgG: 0.47 U/mL (negative). WBC elevated: 8.1 × 10⁹/L (was 5.2 in May 2026). Total cholesterol: 5.93 (May 2026) → 5.69 (Jun 2026), mild decrease. WBC jumped 5.2→8.1 — consistent with active bacterial infection. Historical Borrelia IgM from prior tests also elevated (34.06, 26.96, 25.01 U/mL).',
+   dna:'No direct genetic factor for Borrelia susceptibility identified in your DNA panel. However: NAT2 slow acetylator genotype may affect antibiotic metabolism (doxycycline is standard Lyme treatment). GSTP1 and SOD2 variants mean your antioxidant response is already under load — bacterial infection adds further oxidative stress.',
+   insight:'This is the most urgent new finding. Borrelia burgdorferi (Lyme disease) IgM is significantly elevated and your own lab has flagged this as "suspected active infection." IgM positive without IgG seroconversion can indicate early or active infection. The persistent elevation across multiple tests (30.28 currently, history: 34.06, 26.96, 25.01) may reflect ongoing immune response. Clinical context supports this: WBC jumped from 5.2 → 8.1 (immune activation), WBC jumped 5.2→8.1 (immune activation). Borrelia IgM has been elevated in ALL 4 tests going back to Mar 2024: 25.01→26.96→34.06→30.28 — this is a chronic persistent pattern, not a new finding. You need a Western Blot (ELISA confirmation) and an infectious disease specialist referral urgently. Lyme is highly treatable if caught early — typically 3–6 weeks of doxycycline.',
+   actions:[
+     '🚨 See your doctor THIS WEEK — show them this lab result and the Borrelia suspektní aktivní infekce note',
+     'Request Western Blot (immunoblot) confirmation — the gold standard after positive IgM ELISA',
+     'Ask for referral to infectious disease specialist',
+     'Standard early Lyme treatment: doxycycline 100mg twice daily × 3–6 weeks (check with your doctor)',
+     'Note for antibiotics: NAT2 slow acetylator — inform your doctor of this if any drugs besides doxycycline are considered',
+     'Track symptoms: joint pain, fatigue, headaches, rash, brain fog — these support the diagnosis',
+     'Recheck Borrelia IgM and IgG 6–8 weeks after treatment to confirm clearance'
+   ]},
+  {icon:'❤️',title:'LDL All-Time High + Statin Risk Gene — Most Urgent',priority:'critical',
+   lab:'LDL: 4.13 mmol/L (May 2026) → 2.87 mmol/L (Jun 2026) — notable decrease. Total cholesterol: 5.93 (May 2026) → 5.69 (Jun 2026), slightly lower but still above 5.0 target. Dec 2025 cholesterol was 7.05 (all-time high). hsCRP 4.2 mg/L — above cardiovascular risk cut-off.',
+   dna:'SLCO1B1 rs4149056 CT = statin myopathy risk (*5 allele). HMGCR rs17238484 GT = reduced statin efficacy. APOA5 rs964184 CG = TG elevation gene. LPA rs3798220 CT = Lp(a) risk (not yet measured).',
+   insight:'This is the most critical finding across your entire health profile. LDL is at its highest recorded level at a time when your doctor may logically consider statins — but your SLCO1B1 *5 allele creates real myopathy risk, and HMGCR reduces their efficacy. This is not a reason to avoid treatment; it is a reason to pursue a pharmacogenomics-informed approach to lipid management.',
+   actions:['Discuss cardiovascular risk with your doctor urgently — bring this DNA finding','Specifically mention SLCO1B1 rs4149056 CT before any statin discussion','Request Lp(a) testing — you carry the LPA risk allele and it\'s not in standard panels','Marine omega-3 (EPA/DHA 2–4g/day) is evidence-based for both TG and inflammation','If statins are prescribed: rosuvastatin or pravastatin are safer choices than simvastatin/atorvastatin for your genotype']},
+  {icon:'🛡️',title:'Triglycerides Normalized — Maintain the Improvement',priority:'high',
+   lab:'Triglycerides: 1.94 → 2.58 → 0.95 → 3.30 → 1.44 mmol/L. Major improvement from Oct 2025 high.',
+   dna:'APOA5 rs964184 CG = genetic TG predisposition. ADH1B CC = alcohol lingers longer. FADS1 GT = plant omega-3 doesn\'t convert to EPA/DHA.',
+   insight:'The triglyceride normalization is excellent. The volatile pattern (wide swings) reflects dietary/lifestyle triggers acting on a genetic predisposition. Your APOA5 variant means you are more TG-sensitive than the average person to carbohydrates and alcohol. Whatever changed between Oct 2025 and May 2026 — sustain it.',
+   actions:['Continue whatever dietary changes drove the improvement','Minimize alcohol (ADH1B means it lingers — directly spikes TG)','Use pre-formed marine omega-3, not plant ALA (FADS1 means plant sources don\'t convert)','Keep refined carbohydrates and sugar low — you are genetically TG-sensitive']},
+  {icon:'💊',title:'B12 Persistently Elevated — NOT From Supplements (Investigate)',priority:'high',
+   lab:'B12: 882→882→842→891→745.7 pmol/L (range 138–652). Elevated at EVERY measurement over 2+ years. Now confirmed: no B12 supplementation. Homocysteine: 7.33 µmol/L — NORMAL.',
+   dna:'MTRR A66G AG = reduced B12 recycling — B12 may pool in serum rather than enter cells efficiently. BHMT triple +/+ = methylation running on the betaine shortcut pathway.',
+   insight:'⚠️ This finding is more significant now that supplementation is ruled out. Persistently high serum B12 without supplementation — across 5 separate tests over 2+ years — is endogenous. Most common causes: (1) Liver releasing stored B12 (Gilbert\'s pattern, recurrent bilirubin elevation); (2) MTRR variant causing B12 to pool in serum rather than enter methylation cycles; (3) Less commonly: myeloproliferative or solid-tumour disease. The GOOD news: homocysteine is 7.33 (normal), meaning B12 is functionally available for methylation — this makes a cellular deficiency unlikely. The declining trend (891→745.7) is also reassuring. Most likely explanation: liver B12 release + MTRR pooling, amplified by alcohol effects on hepatic B12 metabolism.',
+   actions:['Tell your doctor you are NOT supplementing B12 — this changes the clinical picture significantly','Request LFT review specifically in context of elevated B12 + Gilbert\'s pattern','Monitor downward trend — retest in 6 months; if still >652 without supplementation, investigate further','Maintain betaine/choline-rich foods (BHMT support): eggs, beets, spinach, quinoa','Reduce alcohol — directly impairs hepatic B12 handling and BHMT function']},
+  {icon:'☀️',title:'Vitamin D Recovered — Revihair D3 Is Working, Genetic Hits Require Ongoing Maintenance',priority:'medium',
+   lab:'Vitamin D: 105→105→88.9→91.8→75.5→97.4 nmol/L. Clear recovery since starting Revihair (Nov 2025). Low of 75.5 in Dec 2025 rose to 97.4 by May 2026.',
+   dna:'CYP2R1 AG = reduced 25-hydroxylation efficiency. DHCR7 GT = reduced skin synthesis. VDR Bsm/Taq both +/- = reduced receptor efficiency. Three independent genetic hits on the Vitamin D system.',
+   insight:'The recovery from 75.5 → 97.4 nmol/L is directly attributable to Revihair\'s 500 IU D3 daily (taken since ~Nov 2025 for hair loss). Note: 500 IU/day is a modest dose — your genetics require consistent supplementation to maintain adequate levels. With CYP2R1 reducing conversion, DHCR7 reducing skin synthesis, and dual VDR variants reducing receptor efficiency, your Vitamin D system is genetically inefficient at every step. If Revihair were stopped, levels would likely decline again within 3–6 months. The Vitamin A in Revihair (200µg, 25% RDI) is a low dose and does not pose toxicity risk at this level.',
+   actions:['Continue Revihair as your D3 source — the 500IU/day is clearly working for your genetics','Target 90–120 nmol/L (you\'re at 97.4 — good, but room to optimise)','Add 15–20 min midday sun exposure when possible for additional D3 and DHCR7 pathway support','Recheck Vitamin D annually — if it falls below 80 nmol/L consider adding a separate D3 supplement','Magnesium (0.96 mmol/L — normal) supports Vitamin D activation; continue magnesium supplementation']},
+  {icon:'🧬',title:'Homocysteine Normal — Methylation Network Working Despite Variants',priority:'medium',
+   lab:'Homocysteine 7.33 µmol/L (range 5.40–16.20) — first measurement. NORMAL.',
+   dna:'BHMT triple +/+, CBS A360A +/+, MTRR A66G — all present. MTHFR C677T is NORMAL (protective).',
+   insight:'Despite having multiple methylation variants, your homocysteine is comfortably within range. The key protective factor is MTHFR C677T being normal. Your body is compensating through the BHMT shortcut pathway (hence the betaine diet matters for you). This is reassuring — functional methylation is intact. The main vulnerability is that BHMT is stress-sensitive and alcohol-sensitive.',
+   actions:['Continue eggs (choline), leafy greens (folate), and beets/quinoa (betaine)','Cortisol was 364 nmol/L (normal, down from 437) — stress management is working','Retest homocysteine annually to confirm ongoing compensation','Keep alcohol to a minimum — depletes betaine and impairs BHMT']},
+  {icon:'🔥',title:'hsCRP Elevated — Genetics + Alcohol + Nicotine Create High CV Inflammation Risk',priority:'high',
+   lab:'hsCRP: 4.2 mg/L (cardiovascular risk: >1.0 elevated; 3–10 mg/L = HIGH risk zone). Standard CRP also 4.2 (within 0–5 general range, but hsCRP cut-offs are stricter).',
+   dna:'SOD2 A16V +/+ = impaired mitochondrial antioxidant defense → chronic low-level oxidative stress. GSTP1 dual +/- = reduced glutathione detox capacity. NAT2 slow acetylator = impaired chemical clearance.',
+   insight:'hsCRP 4.2 mg/L is a HIGH cardiovascular risk reading. Three independent factors are converging here: (1) SOD2 +/+ genetic background of elevated mitochondrial ROS; (2) Daily alcohol — directly elevates CRP via hepatic and gut inflammatory pathways, and your ADH1B CC variant means slower alcohol clearance and longer acetaldehyde exposure per drink; (3) Daily nicotine pouches — even without combustion, nicotine promotes endothelial inflammation and has been shown to elevate hsCRP independently. The combination of LDL 4.13 ↑ + hsCRP 4.2 ↑ + nicotine + SLCO1B1 statin risk is a serious composite cardiovascular risk cluster that warrants urgent lifestyle action and a frank conversation with your doctor.',
+   actions:['🚬 Nicotine reduction is the highest-impact single change for this hsCRP — discuss NRT options with your doctor','🍺 Aim for alcohol-free weekdays — even 3 dry days/week meaningfully lowers CRP over months','CoQ10 supports SOD2 +/+ mitochondrial function — directly addresses the genetic ROS background','Marine omega-3 (EPA/DHA 2–4g/day) lowers both hsCRP and TG simultaneously','Retest hsCRP in 3–6 months — it should fall significantly with reduced alcohol/nicotine','Discuss composite cardiovascular risk with your doctor — hsCRP + LDL + statin gene + nicotine is urgent']},
+];
+
+function dnaTab(sec,btn){
+  document.querySelectorAll('.dna-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dna-'+sec).style.display='block';
+  btn.classList.add('active');
+  renderDnaCategory(sec);
+}
+
+function impactBadge(imp){
+  if(imp==='critical')return'<span style="background:#dc2626;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">⚠️ Critical</span>';
+  if(imp==='high')return'<span style="background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🔴 High</span>';
+  if(imp==='medium')return'<span style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🟡 Medium</span>';
+  if(imp==='protective')return'<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">✅ Protective</span>';
+  return'<span style="background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">Low</span>';
+}
+
+function snpBadge(r){
+  if(r==='homo')return'<span style="background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">+/+ Homozygous</span>';
+  if(r==='hetero')return'<span style="background:#fef3c7;color:#b45309;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">+/- Heterozygous</span>';
+  return'<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">-/- Normal</span>';
+}
+
+function renderDnaCategory(sec){
+  if(sec==='dnainsights'){renderDnaInsights();return;}
+  const cat=DNA_FINDINGS[sec];if(!cat)return;
+  const el=document.getElementById('dna-cat-'+sec);if(!el)return;
+  if(el.dataset.rendered)return;
+  el.dataset.rendered='1';
+  el.innerHTML=`<div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
+    <div style="width:4px;height:24px;background:${cat.color};border-radius:2px"></div>
+    <h3 style="font-size:16px;font-weight:700">${cat.label}</h3>
+  </div>
+  <div style="overflow-x:auto"><table class="dt" style="min-width:700px">
+    <thead><tr><th>Gene / Variant</th><th>rsID</th><th>Your Genotype</th><th>Impact</th><th>Analysis</th></tr></thead>
+    <tbody>${cat.snps.map(s=>`<tr style="${s.impact==='critical'?'background:#fff5f5':s.impact==='protective'?'background:#f0fdf4':''}">
+      <td><strong style="font-size:13px">${s.gene}</strong></td>
+      <td style="font-size:12px;color:var(--muted);font-family:monospace">${s.rs}</td>
+      <td><code style="background:#f1f5f9;padding:3px 8px;border-radius:5px;font-size:13px;font-weight:700">${s.geno}</code></td>
+      <td>${impactBadge(s.impact)}</td>
+      <td style="font-size:12.5px;line-height:1.6;max-width:380px">${s.note}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderDnaInsights(){
+  const el=document.getElementById('dna-insights-list');if(!el)return;
+  if(el.dataset.rendered)return;
+  el.dataset.rendered='1';
+  const priColors={critical:'#ef4444',high:'#f59e0b',medium:'#4f7ef8'};
+  const priLabels={critical:'🔴 Critical',high:'🟡 High Priority',medium:'🔵 Monitor'};
+  el.innerHTML=RAW_INSIGHTS.map(ins=>`
+    <div class="card" style="border-left:4px solid ${priColors[ins.priority]||'#94a3b8'};margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+        <span style="font-size:26px">${ins.icon}</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">${ins.title}</div>
+          <span class="tag ${ins.priority==='critical'?'trd':ins.priority==='high'?'tyw':'tbl'}" style="font-size:11px">${priLabels[ins.priority]}</span>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:14px;gap:12px">
+        <div style="background:#f8fafc;border-radius:8px;padding:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">🔬 Lab Evidence</div>
+          <p style="font-size:13px;line-height:1.6">${ins.lab}</p>
+        </div>
+        <div style="background:#f8fafc;border-radius:8px;padding:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">🧬 Raw DNA Finding</div>
+          <p style="font-size:13px;line-height:1.6">${ins.dna}</p>
+        </div>
+      </div>
+      <div style="background:#eff6ff;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:#1e3a5f;text-transform:uppercase;margin-bottom:6px">💡 Integrated Insight</div>
+        <p style="font-size:13.5px;line-height:1.7;color:#1e293b">${ins.insight}</p>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">✅ Suggested Actions</div>
+        <ul style="font-size:13.5px;line-height:1.9;padding-left:18px">${ins.actions.map(a=>`<li>${a}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+}
+
+function rDnaAnalysis(){
+  renderDnaCategory('cardiovascular');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  const setToday=(id)=>{if(document.getElementById(id))document.getElementById(id).value=td()};
+  ['w-date','ex-date','sl-date','cond-date','med-start','appt-date','lab-date'].forEach(setToday);
+  loadProfile();rDash();updateStorage();
+});
+</script>
+</body>
+</html>
