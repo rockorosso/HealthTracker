@@ -773,6 +773,29 @@ const DB = {
 const charts={};
 function kc(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 
+// ── SEED DEFAULT PROFILE (pre-populated; user can override in Profile page) ──
+(function seedDefaults(){
+  // Profile
+  const p=DB.obj('profile');
+  if(!p.name){
+    DB.set('profile',{
+      name:'Pablo',
+      dob:'1984-09-13',
+      gender:'male',
+      height:169,
+      hunit:'cm',
+      tw:70,
+      wunit:'kg',
+      calGoal:2000
+    });
+  }
+  // Seed weight entry for 19 Sep 2026 if no entries yet
+  const W=DB.get('weight');
+  if(!W.length){
+    DB.set('weight',[{date:'2026-09-19',value:58,unit:'kg',notes:'Baseline entry'}]);
+  }
+})();
+
 // ── NAV ─────────────────────────────────────────────────────
 function showPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
