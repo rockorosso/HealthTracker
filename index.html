@@ -136,9 +136,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sb-sec">Overview</div>
   <div class="nav active" onclick="showPage('dashboard')"><span class="ic">📊</span> Dashboard</div>
   <div class="sb-sec">Tracking</div>
-  <!-- Weight nav hidden until wearable connected -->
-  <!-- Exercise nav hidden until wearable connected -->
-  <!-- Sleep nav hidden until wearable connected -->
+  <div class="nav" onclick="showPage('wearable')"><span class="ic">⌚</span> Activity, Heart & Sleep</div>
+  <div class="nav" onclick="showPage('weight')"><span class="ic">⚖️</span> Weight & BMI</div>
+  <!-- Manual Exercise / Sleep logs replaced by wearable data (pages kept, nav hidden) -->
   <div class="sb-sec">Health Records</div>
   <div class="nav" onclick="showPage('medical')"><span class="ic">🩺</span> Medical Records</div>
   <div class="nav" onclick="showPage('longevity')"><span class="ic">✨</span> Longevity Score</div>
@@ -159,8 +159,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="g4" id="dash-stats"></div>
   <div class="g2">
     <div class="card"><div class="ct">Cholesterol Trend</div><div style="position:relative;height:220px"><canvas id="dCChart"></canvas></div></div>
-    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;text-align:center;background:#f8fafc;border:2px dashed var(--border)"><div style="font-size:36px;margin-bottom:12px">⌚</div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Wearable Not Connected</div><div style="color:var(--muted);font-size:13px">Weight, sleep and exercise tracking will be enabled once you connect a wearable device or fitness tracker.</div></div>
+    <div class="card"><div class="ct" style="display:flex;justify-content:space-between"><span>Daily Steps — last 30 days</span><span style="font-weight:500;color:var(--muted);font-size:12px;cursor:pointer" onclick="showPage('wearable')" id="dash-wr-asof"></span></div><div style="position:relative;height:220px"><canvas id="dStepChart"></canvas></div></div>
   </div>
+  <div class="g4" id="dash-wr" style="margin-top:20px"></div>
 </div>
 
 <!-- WEIGHT -->
@@ -220,6 +221,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="g3" id="sl-stats" style="margin-bottom:20px"></div>
   <div class="card"><div class="ct">Sleep Log</div><div id="sl-table"></div></div>
+</div>
+
+<!-- WEARABLE (Apple Health export) -->
+<div id="page-wearable" class="page">
+  <div class="ph"><h1>⌚ Activity, Heart & Sleep</h1><p id="wr-sub">Apple Health export — Zepp Life band (via Google Health) + iPhone.</p></div>
+  <div class="g4" id="wr-stats" style="margin-bottom:20px"></div>
+  <div class="tabbar">
+    <button class="tabbtn active" onclick="wrTab('activity',this)">🏃 Activity</button>
+    <button class="tabbtn" onclick="wrTab('heart',this)">❤️ Heart Rate</button>
+    <button class="tabbtn" onclick="wrTab('sleep',this)">🌙 Sleep</button>
+    <button class="tabbtn" onclick="wrTab('notes',this)">ℹ️ Data Notes</button>
+  </div>
+  <div id="wr-activity" class="wr-sec">
+    <div class="card" style="margin-bottom:20px"><div class="ct">Daily Steps — last 90 days <span style="font-weight:400;color:var(--muted);font-size:12px">(bars) · 7-day average (line) · 10k reference</span></div><div style="position:relative;height:240px"><canvas id="wrStepChart"></canvas></div></div>
+    <div class="g2" style="margin-bottom:20px">
+      <div class="card"><div class="ct">Monthly Average Steps / day — since 2018</div><div style="position:relative;height:220px"><canvas id="wrMonthChart"></canvas></div></div>
+      <div class="card"><div class="ct">Now vs Last Year</div><div id="wr-compare"></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ct">Active Energy (kcal/day) — last 90 days</div><div style="position:relative;height:200px"><canvas id="wrKcalChart"></canvas></div></div>
+      <div class="card"><div class="ct">Walking Steadiness & Speed</div><div style="position:relative;height:200px"><canvas id="wrGaitChart"></canvas></div><div style="font-size:12px;color:var(--muted);margin-top:8px" id="wr-gait-note"></div></div>
+    </div>
+  </div>
+  <div id="wr-heart" class="wr-sec" style="display:none">
+    <div class="card" style="margin-bottom:20px"><div class="ct">Resting & Average Heart Rate (bpm)</div><div style="position:relative;height:240px"><canvas id="wrHrChart"></canvas></div>
+      <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
+        <span style="color:#ef4444">■ Resting HR</span><span style="color:#f59e0b">■ Average HR (day)</span><span style="color:#94a3b8">■ Weekly resting average</span>
+      </div></div>
+    <div class="g2">
+      <div class="card"><div class="ct">Resting HR by Month</div><div id="wr-rhr-month"></div></div>
+      <div class="card" style="border-left:4px solid #f59e0b"><div class="ct">What to Watch</div><div id="wr-hr-note" style="font-size:13.5px;line-height:1.7"></div></div>
+    </div>
+  </div>
+  <div id="wr-sleep" class="wr-sec" style="display:none">
+    <div class="card" style="margin-bottom:20px"><div class="ct">Sleep Stages — last 30 nights (hours)</div><div style="position:relative;height:260px"><canvas id="wrSleepChart"></canvas></div>
+      <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
+        <span style="color:#1e3a8a">■ Deep</span><span style="color:#8b5cf6">■ REM</span><span style="color:#93c5fd">■ Light</span><span style="color:#4f7ef8">- - 7 h target</span>
+      </div></div>
+    <div class="g3" id="wr-sleep-stats"></div>
+  </div>
+  <div id="wr-notes" class="wr-sec" style="display:none">
+    <div class="card"><div class="ct">About This Data</div>
+      <ul style="font-size:13.5px;line-height:1.9;padding-left:18px">
+        <li>Source: Apple Health export (data from Feb 2018). Devices: iPhone, Zepp Life band via the Google Health app, an old Apple Watch (2018). Daily values use the highest single source per day, so devices are not double-counted.</li>
+        <li>Steps come mostly from the wrist band, which can count arm movement (e.g. gym sessions) as steps; distance comes from the iPhone. That explains high step counts next to a lower distance.</li>
+        <li>Heart-rate and sleep-stage data only start in Sep 2026 (no 2025 comparison yet). Days without the band (e.g. 8–11 Nov 2026) have no HR or sleep.</li>
+        <li>Nights under 3 h (e.g. 14 Nov 2026, 0.5 h) are treated as "band not worn" and excluded from averages.</li>
+        <li>No blood pressure, VO₂ max or recent HRV in the export. Weight is entered manually on the Weight page (last: 59 kg at the GP, 18 Nov 2026).</li>
+        <li>Gym sessions (sets, loads) are kept in the training log, not here.</li>
+      </ul>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px" id="wr-range"></div>
+    </div>
+  </div>
 </div>
 
 <!-- MEDICAL -->
@@ -359,18 +413,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="g4" style="margin-bottom:28px">
     <div class="sc" style="border-top:3px solid #ef4444">
       <div style="font-size:20px;margin-bottom:8px">🚨</div>
-      <div class="sl">Needs Attention — Jun 2026</div>
-      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong style="color:#dc2626">🦠 Borrelia IgM 30.28 POSITIVE</strong> — lab: "suspected active infection". <strong>LDL 4.13</strong> (May 2026 all-time high), <strong>hsCRP 4.2</strong> (CV risk zone)</div>
+      <div class="sl">Needs Attention — Nov 2026</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong style="color:#dc2626">LDL 4.88</strong> — all-time high, rebounded from 2.87 (Jun). <strong>Total chol 6.86</strong>, non-HDL 5.31. <strong>Uric acid 443</strong> (H, highest recorded). GP suggested restarting Lipanthyl (26 Nov).</div>
     </div>
     <div class="sc" style="border-top:3px solid #f59e0b">
       <div style="font-size:20px;margin-bottom:8px">👁️</div>
       <div class="sl">Monitor</div>
-      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>WBC 8.1</strong> ↑ (immune response), <strong>Cholesterol dropped</strong> 5.93→4.30 (acute-phase), <strong>Bilirubin</strong> Gilbert's pattern, <strong>B12 elevated</strong> 745.7</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>Pancreatic amylase 0.90</strong> (limit 0.88; abdominal ultrasound 26 Nov normal), <strong>Bilirubin 32.1 / conjugated 8.3</strong> (Gilbert's), <strong>TG 1.75</strong>, <strong>Resting HR</strong> 61.6→66 bpm (Nov), <strong>hsCRP 4.2</strong> (May, not re-tested)</div>
     </div>
     <div class="sc" style="border-top:3px solid #10b981">
       <div style="font-size:20px;margin-bottom:8px">✅</div>
-      <div class="sl">Improvements</div>
-      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>Triglycerides</strong> normalized (1.44 ✓), <strong>Vit D</strong> 97.4 ✓, <strong>Testosterone</strong> 24.29 ✓, <strong>Homocysteine</strong> 7.33 (normal), <strong>ALT</strong> 0.47 (normalizing)</div>
+      <div class="sl">Good News</div>
+      <div style="font-size:13.5px;margin-top:8px;line-height:1.6;color:var(--txt)"><strong>Liver enzymes</strong> normal, FIB-4 0.72 ✓, <strong>blood count</strong> ✓, <strong>glucose 4.4 / HbA1c 31</strong> ✓, <strong>TSH</strong> 2.46 ✓, <strong>Vit D</strong> 91.2 ✓, urine ✓, <strong>activity</strong> highest on record (~14.5k steps/day)</div>
     </div>
     <div class="sc" style="border-top:3px solid #8b5cf6">
       <div style="font-size:20px;margin-bottom:8px">🧬</div>
@@ -382,7 +436,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <!-- ═══ SECTION 2: FULL LAB RESULTS TABLE ═══ -->
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
     <div style="width:4px;height:28px;background:var(--pri);border-radius:2px"></div>
-    <h2 style="font-size:18px;font-weight:700">2. Complete Blood Test Results (8 Tests)</h2>
+    <h2 style="font-size:18px;font-weight:700">2. Complete Blood Test Results (11 time points, Feb 2023 – Nov 2026)</h2>
   </div>
   <div class="card" style="margin-bottom:28px">
     <div style="overflow-x:auto">
@@ -402,6 +456,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <th style="background:#fef9f0">Dec 2025</th>
             <th style="background:#f0fff4">May 2026</th>
             <th style="background:#fce7f3">Jun 2026</th>
+            <th style="background:#e0f2fe">Nov 2026</th>
             <th>Trend</th>
           </tr>
         </thead>
@@ -439,11 +494,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="card" style="border-top:3px solid #ef4444">
       <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Discuss with Your Doctor</div>
       <ul style="font-size:13px;line-height:2;padding-left:16px;color:var(--txt)">
-        <li>Cardiovascular risk assessment (rising cholesterol + high TG)</li>
-        <li>Why is B12 2–3× above range? Are you supplementing?</li>
-        <li>Confirm Gilbert's syndrome (recurrent bilirubin pattern)</li>
-        <li>Consider homocysteine test (functional B12/folate marker)</li>
-        <li>Omega-3 / statin discussion for lipid management</li>
+        <li>LDL 2.87 → 4.88: does fenofibrate cover it, or add an LDL-specific option that SLCO1B1 doesn't affect (e.g. ezetimibe)?</li>
+        <li>Repeat a fasting lipid panel + uric acid (24 Nov sample: pre-analytical conditions not fully met, concentrated urine)</li>
+        <li>Uric acid 443 — first clearly high value</li>
+        <li>Conjugated bilirubin 8.3 (slightly high) alongside Gilbert's</li>
+        <li>B12 2–3× above range without supplements (not re-measured in Nov)</li>
       </ul>
     </div>
     <div class="card" style="border-top:3px solid #f59e0b">
@@ -460,7 +515,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-weight:700;font-size:14px;margin-bottom:12px">💊 Supplements to Consider</div>
       <ul style="font-size:13px;line-height:2;padding-left:16px;color:var(--txt)">
         <li>CoQ10 — supports SOD2 +/+ mitochondrial function</li>
-        <li>Vitamin D3 — trend declining, VDR variants reduce receptor efficiency</li>
+        <li>Vitamin D3 — 91.2 in Nov after ~2 months off Revihair; keep it going through winter (VDR variants)</li>
         <li>Omega-3 (EPA/DHA) — reduces triglycerides</li>
         <li>Magnesium — BH4 support, general methylation</li>
         <li><em>Review B12 supplement dose with doctor first</em></li>
@@ -532,7 +587,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <!-- LAB ANALYSIS -->
 <div id="page-labanalysis" class="page">
-  <div class="ph"><h1>🔬 Lab Analysis</h1><p>Your blood work across 10 time points — Feb 2023 to Jun 2026. Flagged values and trends are highlighted.</p></div>
+  <div class="ph"><h1>🔬 Lab Analysis</h1><p>Your blood work across 11 time points — Feb 2023 to Nov 2026. Flagged values and trends are highlighted.</p></div>
 
   <!-- Alert banner -->
   <div id="lab-alerts" style="margin-bottom:20px"></div>
@@ -540,24 +595,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <!-- Summary stat cards -->
   <div class="g4" style="margin-bottom:20px">
     <div class="sc" style="border-left:4px solid #ef4444">
-      <div class="sl">⚠️ Currently Flagged</div>
-      <div class="sv" style="color:#ef4444">3</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">Cholesterol, Bilirubin, Borrelia IgM</div>
+      <div class="sl">⚠️ Flagged — Nov 2026</div>
+      <div class="sv" style="color:#ef4444" id="lab-flag-n">—</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px" id="lab-flag-list"></div>
     </div>
     <div class="sc" style="border-left:4px solid #f59e0b">
-      <div class="sl">📉 Improving Trend</div>
-      <div class="sv" style="color:#10b981">↓</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">Cholesterol improving (7.05→5.69)</div>
+      <div class="sl">📈 Worsening Trend</div>
+      <div class="sv" style="color:#ef4444">↑</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">LDL 2.87 → 4.88, uric acid 383 → 443 (Jun/May → Nov 2026)</div>
     </div>
     <div class="sc" style="border-left:4px solid #10b981">
-      <div class="sl">✅ Improving</div>
-      <div class="sv" style="color:#10b981">4</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">LDL, TG, Creatinine, Vitamin D</div>
+      <div class="sl">✅ Stable & Normal</div>
+      <div class="sv" style="color:#10b981">✓</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Liver enzymes, blood count, glucose, TSH, Vit D, urine</div>
     </div>
     <div class="sc" style="border-left:4px solid #4f7ef8">
       <div class="sl">📅 Last Test</div>
-      <div class="sv" style="font-size:18px">Jun 2026</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">10 time points since Feb 2023</div>
+      <div class="sv" style="font-size:18px">24 Nov 2026</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">11 time points since Feb 2023</div>
     </div>
   </div>
 
@@ -574,7 +629,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="card">
         <div class="ct">🫀 Lipids — Total Cholesterol & Triglycerides</div>
         <div style="background:#fff8f8;border-left:3px solid #ef4444;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#7f1d1d">
-          📉 <strong>Improving:</strong> Cholesterol peaked at 7.05 mmol/L (Dec 2025), now down to 5.69 (Jun 2026). LDL dropped sharply: 4.13 (May 2026) → 2.87 (Jun 2026) — now in range. Triglycerides normalized: 3.30 (Oct 2025) → 1.44 (May 2026).
+          📈 <strong>Rebounded:</strong> LDL 2.87 (Jun 2026) → <strong>4.88</strong> (Nov 2026), highest recorded. Total cholesterol 5.59 → 6.86, non-HDL 5.31. TG 1.75, just above range. HDL 1.55 is the best value on record.
         </div>
         <div style="position:relative;height:220px"><canvas id="lipidChart"></canvas></div>
         <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
@@ -587,7 +642,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="card">
         <div class="ct">🫁 Liver — Bilirubin & Enzymes</div>
         <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#78350f">
-          ℹ️ <strong>Bilirubin recurrently elevated</strong> (Mar 2024 & Oct 2025). AST spiked Oct 2024 but resolved. Consider Gilbert's syndrome.
+          ℹ️ <strong>Bilirubin 32.1 (Nov 2026)</strong> — highest recorded, conjugated 8.3 slightly high. ALT/AST/GGT normal, FIB-4 0.72 (low risk), liver normal on ultrasound → Gilbert's pattern.
         </div>
         <div style="position:relative;height:220px"><canvas id="liverChart"></canvas></div>
         <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">
@@ -601,14 +656,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="card">
         <div class="ct">💉 Vitamin B12 & Vitamin D</div>
         <div style="background:#eff6ff;border-left:3px solid #4f7ef8;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#1e3a5f">
-          🔵 <strong>B12 persistently 2–3× above range</strong> (range: 145–569 pmol/L). Vitamin D declining but still in range. Both intersect with your DNA variants.
+          🔵 <strong>B12 persistently above range</strong> (not re-measured in Nov). <strong>Vitamin D 91.2</strong> (Nov) — in range despite ~2 months off Revihair. Both intersect with your DNA variants.
         </div>
         <div style="position:relative;height:200px"><canvas id="vitChart"></canvas></div>
       </div>
       <div class="card">
         <div class="ct">🩸 Kidney — Creatinine & Uric Acid</div>
-        <div style="background:#f0fdf4;border-left:3px solid #10b981;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#14532d">
-          ✅ <strong>Improving:</strong> Creatinine normalized from 111–112 (H) to 88–91 (normal). Uric acid spiked Feb 2025 but resolved.
+        <div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:8px 12px;border-radius:6px;font-size:12.5px;margin-bottom:12px;color:#78350f">
+          ⚠️ <strong>Uric acid 443 (H)</strong> — highest recorded. Creatinine 108 (creatine effect), eGFR 1.21, urine albumin/creatinine 0.2 (normal) → no sign of kidney damage.
         </div>
         <div style="position:relative;height:200px"><canvas id="kidneyChart"></canvas></div>
       </div>
@@ -623,7 +678,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <table class="dt" style="min-width:700px">
           <thead><tr>
             <th>Test</th><th>Unit</th><th>Normal Range</th>
-            <th>Feb 2023</th><th>Jul 2023</th><th>Mar 2024</th><th>Oct 2024</th><th>Feb 2025</th><th style="background:#fef9c3">Jul 2025</th><th>Oct 2025</th><th>Dec 2025</th><th style="background:#f0fff4">May 2026</th><th style="background:#fce7f3">Jun 2026</th>
+            <th>Feb 2023</th><th>Jul 2023</th><th>Mar 2024</th><th>Oct 2024</th><th>Feb 2025</th><th style="background:#fef9c3">Jul 2025</th><th>Oct 2025</th><th>Dec 2025</th><th style="background:#f0fff4">May 2026</th><th style="background:#fce7f3">Jun 2026</th><th style="background:#e0f2fe">Nov 2026</th>
           </tr></thead>
           <tbody id="lab-full-table"></tbody>
         </table>
@@ -646,8 +701,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <span style="font-size:22px">🫀</span>
             <div><div style="font-weight:700;font-size:15px">Cardiovascular Risk — Needs Attention</div><span class="tag trd">High Priority</span></div>
           </div>
-          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Cholesterol peaked at <strong>7.05 mmol/L (Dec 2025)</strong> and has since improved to <strong>5.69 (Jun 2026)</strong> — still above the 5.0 target but trending in the right direction. LDL dropped sharply from 4.13 (May 2026) to <strong>2.87 mmol/L (Jun 2026)</strong> — now within range. Triglycerides normalized from 3.30 (Oct 2025) to 1.44 (May 2026) without medication, suggesting lifestyle changes are working. Non-HDL is still elevated at 4.30 (target &lt;3.80).<br><br>
-          <strong>Context:</strong> Given your Gilbert syndrome + SLCO1B1 genetic variant, statins require extra caution. Fenofibrate (Lipanthyl) is effective for TG control but not for LDL/total cholesterol. Current trajectory without medication is positive — sustain with continued low alcohol intake and reduced refined carbohydrates.</p>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">After improving to <strong>2.87 mmol/L in Jun 2026</strong>, LDL rebounded to <strong>4.88 mmol/L (24 Nov 2026)</strong> — the highest on record. Total cholesterol 6.86, non-HDL 5.31 (target &lt;3.80), cholesterol/HDL ratio 4.43 (limit 4.20). TG 1.75 is just above range. HDL 1.55 is good and Lp(a) is low (12.4 nmol/L). The lab noted that sampling conditions were not fully met, so a repeat fasting panel is worth asking for.<br><br>
+          <strong>Context:</strong> On 26 Nov 2026 the GP suggested going back to Lipanthyl (fenofibrate), which Pablo took until ~2024; in Oct 2024 his values were much better (TC 4.74, LDL 2.33). Fenofibrate mainly lowers TG (and uric acid) and lowers LDL only modestly. With Gilbert's + SLCO1B1 *5, statins need extra caution, so LDL-specific options without SLCO1B1 interaction (e.g. ezetimibe) are worth raising. The 26 Nov ultrasound showed a normal gallbladder, which is relevant because fibrates can promote gallstones.</p>
         </div>
 
         <div class="card" style="border-left:4px solid #f59e0b">
@@ -664,8 +719,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <span style="font-size:22px">🫁</span>
             <div><div style="font-weight:700;font-size:15px">Bilirubin — Recurrent Mild Elevation</div><span class="tag tyw">Monitor</span></div>
           </div>
-          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Bilirubin was elevated in Mar 2024 (27.2 H) and Oct 2025 (27.1 H), with normal values in between. This pattern — intermittent isolated bilirubin elevation with otherwise normal liver enzymes — is classic for <strong>Gilbert's syndrome</strong>, a benign genetic variant in bilirubin processing that affects ~5–10% of people.<br><br>
-          <strong>Recommendation:</strong> If not already confirmed, mention this pattern to your doctor. Gilbert's is benign and typically triggered by fasting, stress, or illness. No treatment needed, but worth confirming the diagnosis.</p>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Bilirubin was elevated in Feb 2023, Mar 2024, Oct 2025 and May 2026 (26.9–27.2), and reached <strong>32.1 in Nov 2026</strong>, with conjugated bilirubin <strong>8.3</strong> (limit 5.0). ALT, AST, GGT and ALP are all normal, FIB-4 is 0.72 (low fibrosis risk), and the 26 Nov ultrasound showed a normal liver with no bile-duct dilation. This fits <strong>Gilbert's syndrome</strong> (confirmed, UGT1A1 variant), which rises with fasting, illness and stress — the Nov sample followed a diarrhoea episode.<br><br>
+          <strong>Recommendation:</strong> No treatment needed. Mention the slightly high conjugated fraction to your doctor, since Gilbert's mainly raises the unconjugated part.</p>
         </div>
       </div>
 
@@ -673,18 +728,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="card" style="border-left:4px solid #10b981">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="font-size:22px">✅</span>
-            <div><div style="font-weight:700;font-size:15px">Kidney Function — Significantly Improved</div><span class="tag tgr">Good News</span></div>
+            <div><div style="font-weight:700;font-size:15px">Kidney OK — Uric Acid High</div><span class="tag tyw">Monitor</span></div>
           </div>
-          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Creatinine was elevated at <strong>111–112 µmol/L</strong> in 2024 (above range of 62–106) but returned to normal in 2025 (<strong>88–91</strong>). GFR is consistently normal. Uric acid spiked to 422 in Feb 2025 (slightly above 417 limit) but returned to normal.<br><br>
-          Kidney function is currently good. The earlier creatinine elevation may have reflected higher muscle mass, dehydration, or temporary factors.</p>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Creatinine <strong>108 µmol/L</strong> (limit 106) and eGFR 1.21 (CKD-G2 label) are consistent with daily creatine supplementation and muscle mass. Urine albumin/creatinine ratio <strong>0.2 g/mol</strong> (A1, normal) and a clean urine sample argue against kidney damage.<br><br>
+          <strong>Uric acid 443 µmol/L</strong> (limit 417) is the highest recorded (383 in May 2026). Common drivers: beer, high protein intake and low hydration — the Nov urine was concentrated (specific gravity 1.023). Fenofibrate also lowers uric acid.</p>
         </div>
 
         <div class="card" style="border-left:4px solid #10b981">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <span style="font-size:22px">🩸</span>
-            <div><div style="font-weight:700;font-size:15px">Immune Profile — Normalized</div><span class="tag tgr">Improved</span></div>
+            <div><div style="font-weight:700;font-size:15px">Immune Profile — Normal</div><span class="tag tgr">Good</span></div>
           </div>
-          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">In Mar and Oct 2024, neutrophils were low (42.4%) and lymphocytes elevated (48.1%). Normalized through 2025. Latest Jun 2026: neutrophils <strong>55.3%</strong>, lymphocytes <strong>35.7%</strong> — both well within normal range. WBC elevated at 8.1 × 10⁹/L (Jun 2026), up from 5.2 (May 2026) and 7.5 (Dec 2025), likely related to the active Borrelia IgM finding. Doctor has reviewed the Borrelia results and assessed the immune response as not requiring treatment.</p>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Nov 2026: WBC <strong>6.4</strong> (down from 8.1 in Jun), neutrophils <strong>57.2%</strong>, lymphocytes <strong>31.8%</strong>, monocytes/eosinophils/basophils all normal. Borrelia IgM has been low-positive in every test (25–34 U/mL) with IgG negative; the doctor assessed it as a serological scar / normal immune reaction needing no treatment. Borrelia, H. pylori, Campylobacter and Yersinia serologies were re-requested in Nov (results came after the printout; the GP reported them as normal).</p>
         </div>
 
         <div class="card" style="border-left:4px solid #10b981">
@@ -692,7 +747,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <span style="font-size:22px">⚡</span>
             <div><div style="font-weight:700;font-size:15px">Hormones & Metabolic — All Normal</div><span class="tag tgr">Good</span></div>
           </div>
-          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Glucose stable (4.3–4.7 mmol/L, well within range). HbA1c normal at 30–31 mmol/mol — no pre-diabetes risk. Testosterone healthy at <strong>20.7–24.3 nmol/L</strong>. TSH stable: 2.13 (Dec 2025), 1.85 (Jun 2026) — well within range. Vitamin D <strong>recovered to 97.4 nmol/L</strong> (May 2026), up from 75.5 (Dec 2025) — Revihair D3 supplementation is working. Cortisol normal. PSA normal and stable.</p>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Glucose stable (4.3–4.7 mmol/L; <strong>4.4</strong> in Nov). HbA1c <strong>31</strong> mmol/mol — the GP ruled out diabetes. Testosterone healthy at <strong>20.7–24.3 nmol/L</strong>. TSH stable: 2.13 (Dec 2025), 1.85 (Jun 2026), <strong>2.46</strong> (Nov 2026). Vitamin D <strong>91.2 nmol/L</strong> (Nov) after 97.4 (May) — still in range despite ~2 months off Revihair. Cortisol normal. PSA last measured Feb 2025.</p>
+        </div>
+
+        <div class="card" style="border-left:4px solid #10b981">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px">🧪</span>
+            <div><div style="font-weight:700;font-size:15px">Pancreas — Amylase Marginal, Ultrasound Normal</div><span class="tag tgr">Reassuring</span></div>
+          </div>
+          <p style="font-size:13.5px;line-height:1.7;color:var(--txt)">Pancreatic amylase <strong>0.90 µkat/L</strong> (limit 0.88) — about 2% above the limit, measured after a diarrhoea episode. Lipase was not measured. <strong>Abdominal ultrasound (26 Nov 2026, MUDr. Palička, MEDIGAP):</strong> pancreas clearly seen in the head region, homogeneous and well defined; liver not enlarged, homogeneous, no bile-duct dilation; gallbladder normal, no stones or cholecystitis; both kidneys, spleen and bladder normal; abdominal aorta not dilated; no free fluid. The pancreatic body and tail are not described (often hidden by bowel gas).</p>
         </div>
       </div>
     </div>
@@ -794,6 +857,13 @@ function kc(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
   if(!W.length){
     DB.set('weight',[{date:'2026-09-19',value:58,unit:'kg',notes:'Baseline entry'}]);
   }
+  // v2 (Nov 2026): GP measurement — added once, never re-added if deleted
+  if(!localStorage.getItem('hp_seed_v2')){
+    const W2=DB.get('weight');
+    if(!W2.some(w=>w.date==='2026-11-18'))W2.push({date:'2026-11-18',value:59,unit:'kg',notes:'GP visit — BP 124/75, pulse 71, waist 78 cm'});
+    W2.sort((a,b)=>a.date.localeCompare(b.date));DB.set('weight',W2);
+    localStorage.setItem('hp_seed_v2','1');
+  }
 })();
 
 // ── NAV ─────────────────────────────────────────────────────
@@ -802,7 +872,7 @@ function showPage(p){
   document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   document.querySelectorAll('.nav').forEach(x=>{if(x.getAttribute('onclick')?.includes("'"+p+"'"))x.classList.add('active')});
-  ({dashboard:rDash,weight:rWeight,exercise:rExercise,sleep:rSleep,medical:rMedical,longevity:rLongevity,fullreport:rFullReport,labanalysis:rLabAnalysis,dnaanalysis:rDnaAnalysis,profile:rProfile})[p]?.();
+  ({dashboard:rDash,wearable:rWearable,weight:rWeight,exercise:rExercise,sleep:rSleep,medical:rMedical,longevity:rLongevity,fullreport:rFullReport,labanalysis:rLabAnalysis,dnaanalysis:rDnaAnalysis,profile:rProfile})[p]?.();
 }
 
 // ── HELPERS ─────────────────────────────────────────────────
@@ -828,13 +898,14 @@ function rDash(){
   const exW=E.filter(e=>(new Date()-new Date(e.date))/86400000<=7);
   const latestChol=LAB_RAW?LAB_RAW.find(x=>x.t==='Total Cholesterol')?.v.filter(v=>v!==null).pop():null;
   const latestLDL=LAB_RAW?LAB_RAW.find(x=>x.t==='LDL Cholesterol')?.v.filter(v=>v!==null).pop():null;
-  const latestWBC=LAB_RAW?LAB_RAW.find(x=>x.t==='WBC')?.v.filter(v=>v!==null).pop():null;
-  const latestBor=LAB_RAW?LAB_RAW.find(x=>x.t==='Borrelia IgM')?.v.filter(v=>v!==null).pop():null;
+  const latestUA=LAB_RAW.find(x=>x.t==='Uric Acid')?.v.filter(v=>v!==null).pop();
+  const latestVD=LAB_RAW.find(x=>x.t==='Vitamin D')?.v.filter(v=>v!==null).pop();
+  const LD=LAB_DATES[LAB_DATES.length-1];
   document.getElementById('dash-stats').innerHTML=[
-    {l:'Total Cholesterol',v:latestChol||'—',u:latestChol?'mmol/L':'',i:'🫀',b:latestChol&&latestChol>5.0?'Above range (Jun 2026)':'In range',bc:latestChol&&latestChol>5.0?'br':'bg'},
-    {l:'LDL Cholesterol',v:latestLDL||'—',u:latestLDL?'mmol/L':'',i:'💊',b:latestLDL&&latestLDL>3.0?'Above range':'In range (Jun 2026)',bc:latestLDL&&latestLDL>3.0?'br':'bg'},
-    {l:'WBC (White Blood Cells)',v:latestWBC||'—',u:latestWBC?'10⁹/L':'',i:'🩸',b:latestWBC&&latestWBC>10?'Above range':latestWBC&&latestWBC>7?'Mildly elevated':'In range',bc:latestWBC&&latestWBC>10?'br':latestWBC&&latestWBC>7?'by':'bg'},
-    {l:'Borrelia IgM',v:latestBor||'—',u:latestBor?'U/mL':'',i:'🦠',b:latestBor&&latestBor>16?'Elevated — under review':'In range',bc:latestBor&&latestBor>16?'by':'bg'}
+    {l:'LDL Cholesterol',v:latestLDL||'—',u:'mmol/L',i:'💊',b:latestLDL>3.0?`Above range (${LD})`:`In range (${LD})`,bc:latestLDL>3.0?'br':'bg'},
+    {l:'Total Cholesterol',v:latestChol||'—',u:'mmol/L',i:'🫀',b:latestChol>5.0?`Above range (${LD})`:'In range',bc:latestChol>5.0?'br':'bg'},
+    {l:'Uric Acid',v:latestUA||'—',u:'µmol/L',i:'💧',b:latestUA>417?`Above range (${LD})`:'In range',bc:latestUA>417?'br':'bg'},
+    {l:'Vitamin D',v:latestVD||'—',u:'nmol/L',i:'☀️',b:latestVD<75?'Below range':`In range (${LD})`,bc:latestVD<75?'by':'bg'}
   ].map(s=>`<div class="sc"><div style="font-size:24px;margin-bottom:10px">${s.i}</div><div class="sl">${s.l}</div><div class="sv">${s.v} <span class="su">${s.u}</span></div><span class="badge ${s.bc}">${s.b}</span></div>`).join('');
 
   // Weight/Sleep charts — disabled until wearable connected
@@ -851,12 +922,21 @@ function rDash(){
       {label:'Total Chol',data:tcRow.v,borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,spanGaps:true},
       {label:'LDL (bad)',data:ldlRow?ldlRow.v:[],borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
       {label:'HDL (good)',data:hdlRow?hdlRow.v:[],borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
-      {label:'Limit 5.0',data:[5,5,5,5,5,5,5,5,5,5],borderColor:'rgba(239,68,68,.25)',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'Limit 5.0',data:lim(5),borderColor:'rgba(239,68,68,.25)',borderDash:[5,5],pointRadius:0,fill:false},
     ]},options:{...chartDefaults,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}}}}});
   }
 
-  // Exercise chart — disabled until wearable connected
-  if(document.getElementById('dEChart')){kc('dE');}
+  // Wearable summary
+  const lw2=[...DB.get('weight')].sort((a,b)=>a.date.localeCompare(b.date)).pop();
+  const tiles=wrStatTiles().slice(0,3);
+  if(lw2)tiles.push({l:'Weight',v:lw2.value,u:lw2.unit,i:'⚖️',b:`${fd(lw2.date)} · BMI ${p.height?calcBMI(lw2.value,lw2.unit,p.height,p.hunit||'cm'):'—'}`,c:'bb'});
+  document.getElementById('dash-wr').innerHTML=tiles.map(tileHTML).join('');
+  document.getElementById('dash-wr-asof').textContent=`data through ${fd(WEARABLE.end)} →`;
+  kc('dSt');const sd=WR.dates.slice(-30),sv=WR.steps.slice(-30);
+  charts['dSt']=new Chart(document.getElementById('dStepChart'),{type:'bar',data:{labels:sd.map(fd),datasets:[
+    {type:'line',data:sd.map(()=>10000),borderColor:'rgba(16,185,129,.5)',borderDash:[5,5],pointRadius:0,fill:false},
+    {data:sv,backgroundColor:sv.map(v=>v>=10000?'rgba(16,185,129,.6)':v>=7000?'rgba(79,126,248,.5)':'rgba(245,158,11,.6)'),borderRadius:3}
+  ]},options:{...chartDefaults,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{ticks:{maxTicksLimit:8,font:{size:10}}}}}});
 }
 
 // ── WEIGHT ───────────────────────────────────────────────────
@@ -996,7 +1076,7 @@ function rMedical(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-weight:700;font-size:15px">🤒 ${e.name}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">${fd(e.date_start)} → ${fd(e.date_end)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${e.when||fd(e.date_start)+' → '+fd(e.date_end)}</div>
         </div>
         <div style="display:flex;gap:6px">
           <span class="tag ${sevColor[e.severity]||'tgy'}">${e.severity}</span>
@@ -1020,11 +1100,14 @@ function rLongevity(){
   if(W.length&&p.height){const lw=W[W.length-1];const bmi=parseFloat(calcBMI(lw.value,lw.unit,p.height,p.hunit||'cm'));sc.bmi=bmi>=18.5&&bmi<25?20:bmi>=17&&bmi<27?14:bmi>=15&&bmi<30?8:4}else sc.bmi=10;
   // Sleep (0-20)
   const sl7=S.slice(-7);
-  if(sl7.length>=3){const ah=sl7.reduce((a,b)=>a+parseFloat(b.hours),0)/sl7.length;const aq=sl7.reduce((a,b)=>a+parseInt(b.quality),0)/sl7.length;sc.sleep=(ah>=7&&ah<=9?12:ah>=6?8:4)+(aq>=4?8:aq>=3?5:2)}else sc.sleep=10;
-  // Exercise (0-20)
+  const wSl=wLast(WR.sleep,14),wDR=(wLast(WR.deep,14)||0)+(wLast(WR.rem,14)||0),wSt=wLast(WR.steps,30);
+  if(wSl!==null){sc.sleep=(wSl>=7&&wSl<=9?12:wSl>=6?8:4)+(wDR>=2.5?8:wDR>=2?5:2)}
+  else if(sl7.length>=3){const ah=sl7.reduce((a,b)=>a+parseFloat(b.hours),0)/sl7.length;const aq=sl7.reduce((a,b)=>a+parseInt(b.quality),0)/sl7.length;sc.sleep=(ah>=7&&ah<=9?12:ah>=6?8:4)+(aq>=4?8:aq>=3?5:2)}else sc.sleep=10;
+  // Exercise (0-20) — wearable steps (30d) + gym 3–4×/week
   const ex30=E.filter(e=>(new Date()-new Date(e.date))/86400000<=30);
   const ws=ex30.length/4,tm=ex30.reduce((a,b)=>a+(parseInt(b.duration)||0),0)/4;
-  sc.exercise=ws>=4||tm>=150?20:ws>=3||tm>=100?15:ws>=1?8:3;
+  if(wSt!==null)sc.exercise=wSt>=10000?20:wSt>=7500?15:wSt>=5000?8:3;
+  else sc.exercise=ws>=4||tm>=150?20:ws>=3||tm>=100?15:ws>=1?8:3;
   // Lab Health (0-20) — based on latest lab values in range
   const labScore=(()=>{
     const lastIdx=LAB_DATES.length-1;
@@ -1048,8 +1131,8 @@ function rLongevity(){
   const inRangeCount=tested.filter(r=>{const v=r.v[lastIdx];return(r.lo===null||v>=r.lo)&&(r.hi===null||v<=r.hi)}).length;
   const factors=[
     {i:'⚖️',n:'Weight & BMI',d:W.length?'Based on your latest entry':'No weight data yet',s:sc.bmi,c:'#4f7ef8'},
-    {i:'🌙',n:'Sleep Quality',d:S.length>=3?'Based on last 7 nights':'Log at least 3 nights',s:sc.sleep,c:'#8b5cf6'},
-    {i:'🏃',n:'Physical Activity',d:E.length?'Based on last 30 days':'No exercise logged yet',s:sc.exercise,c:'#10b981'},
+    {i:'🌙',n:'Sleep Quality',d:wSl!==null?`Wearable, last 14 nights: ${wSl.toFixed(1)} h, deep+REM ${wDR.toFixed(1)} h`:S.length>=3?'Based on last 7 nights':'Log at least 3 nights',s:sc.sleep,c:'#8b5cf6'},
+    {i:'🏃',n:'Physical Activity',d:wSt!==null?`Wearable, last 30 days: ${Math.round(wSt).toLocaleString('en-US')} steps/day (+ gym 3–4×/week)`:E.length?'Based on last 30 days':'No exercise logged yet',s:sc.exercise,c:'#10b981'},
     {i:'🔬',n:'Lab Health',d:`${inRangeCount}/${tested.length} markers in range (${LAB_DATES[lastIdx]})`,s:sc.labs,c:'#f59e0b'},
     {i:'🩺',n:'Medical Status',d:C.length?`${ac} active, ${mc} managed condition(s)`:'No conditions recorded',s:sc.medical,c:'#ef4444'}
   ];
@@ -1057,7 +1140,7 @@ function rLongevity(){
   const recs=[];
   if(sc.sleep<15)recs.push({i:'🌙',t:'Aim for 7–9 hours of sleep per night. Consistent sleep times support your circadian rhythm and recovery.'});
   if(sc.exercise<15)recs.push({i:'🏃',t:'Target 150 minutes of moderate activity per week (about 4–5 sessions). Even brisk walking counts!'});
-  if(sc.labs<15)recs.push({i:'🔬',t:'Several lab markers are outside optimal range. Prioritise your doctor discussion on LDL, hsCRP, and CKD follow-up.'});
+  if(sc.labs<15)recs.push({i:'🔬',t:'Several lab markers are outside range (Nov 2026). Prioritise the doctor discussion on LDL 4.88 (Lipanthyl vs LDL-specific options), uric acid 443 and a repeat fasting panel.'});
   if(sc.bmi<15)recs.push({i:'⚖️',t:'A BMI between 18.5 and 24.9 is associated with lower disease risk. Combine balanced nutrition with regular exercise.'});
   if(sc.medical<18)recs.push({i:'🩺',t:'Schedule regular checkups and follow-ups with your doctor. Managing conditions proactively improves long-term outcomes.'});
   if(!recs.length)recs.push({i:'🎉',t:'Excellent work! Keep maintaining your healthy habits. Consider adding more variety to your workouts and trying new nutritious foods.'});
@@ -1289,13 +1372,13 @@ function trendArrow(vals){
 
 function renderFRLabTable(){
   const el=document.getElementById('fr-lab-table');if(!el)return;
-  const cats=['Kidney','Electrolytes','Liver','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones','Serology'];
-  const catIcons={Kidney:'🫘',Electrolytes:'⚡',Liver:'🫁',Lipids:'🫀',Metabolic:'🍬',Vitamins:'💊',Inflammation:'🔥','Blood Count':'🩸',Iron:'🔩',Hormones:'⚗️',Serology:'🦠'};
+  const cats=['Kidney','Electrolytes','Liver','Pancreas','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones','Serology'];
+  const catIcons={Kidney:'🫘',Electrolytes:'⚡',Liver:'🫁',Pancreas:'🧪',Lipids:'🫀',Metabolic:'🍬',Vitamins:'💊',Inflammation:'🔥','Blood Count':'🩸',Iron:'🔩',Hormones:'⚗️',Serology:'🦠'};
   let html='';
   cats.forEach(cat=>{
     const rows=LAB_RAW.filter(r=>r.cat===cat);
     if(!rows.length)return;
-    html+=`<tr><td colspan="14" style="background:#f1f5f9;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px">${catIcons[cat]||''} ${cat}</td></tr>`;
+    html+=`<tr><td colspan="${LAB_DATES.length+4}" style="background:#f1f5f9;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px">${catIcons[cat]||''} ${cat}</td></tr>`;
     rows.forEach(r=>{
       const rangeStr=r.lo!==null&&r.hi!==null?`${r.lo}–${r.hi}`:r.hi!==null?`<${r.hi}`:'—';
       const cells=r.v.map(val=>{
@@ -1390,8 +1473,8 @@ function renderFRCharts(){
     {label:'TG',data:tg,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'HDL',data:hdl,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'LDL',data:ldl,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
-    {label:'TC limit 5.0',data:[5,5,5,5,5,5,5,5,5,5],borderColor:'rgba(239,68,68,.25)',borderDash:[6,4],pointRadius:0,fill:false},
-    {label:'TG limit 1.7',data:[1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TC limit 5.0',data:lim(5),borderColor:'rgba(239,68,68,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TG limit 1.7',data:lim(1.7),borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
   ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}}}}}});
 
   kc('frV');
@@ -1399,8 +1482,8 @@ function renderFRCharts(){
   if(vCtx) charts['frV']=new Chart(vCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
     {label:'Vit D',data:vd,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
     {label:'B12',data:b12,borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
-    {label:'Vit D min',data:[75,75,75,75,75,75,75,75],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
-    {label:'B12 max',data:[652,652,652,652,652,652,652,652],borderColor:'rgba(79,126,248,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
+    {label:'Vit D min',data:lim(75),borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'B12 max',data:lim(652),borderColor:'rgba(79,126,248,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
   ]},options:{plugins:{legend:{display:false}},animation:false,scales:{
     y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Vit D',font:{size:10}}},
     y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'B12',font:{size:10}}}
@@ -1412,7 +1495,7 @@ function renderFRCharts(){
     {label:'Bilirubin',data:bil,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'AST×100',data:ast.map(v=>v?v*100:null),borderColor:'#ef4444',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'ALT×100',data:alt.map(v=>v?v*100:null),borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,spanGaps:true},
-    {label:'Bil limit 21',data:[21,21,21,21,21,21,21,21],borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'Bil limit 21',data:lim(21),borderColor:'rgba(245,158,11,.25)',borderDash:[6,4],pointRadius:0,fill:false},
   ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}}}}}});
 
   kc('frK');
@@ -1420,7 +1503,7 @@ function renderFRCharts(){
   if(kCtx) charts['frK']=new Chart(kCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
     {label:'Creatinine',data:creat,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
     {label:'Uric Acid',data:uric,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
-    {label:'Creat limit 110',data:[110,110,110,110,110,110,110,110],borderColor:'rgba(16,185,129,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'Creat limit 106',data:lim(106),borderColor:'rgba(16,185,129,.25)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
   ]},options:{plugins:{legend:{display:false}},animation:false,scales:{
     y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Creatinine',font:{size:10}}},
     y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Uric Acid',font:{size:10}}}
@@ -1428,96 +1511,125 @@ function renderFRCharts(){
 }
 
 // ── LAB ANALYSIS ─────────────────────────────────────────────
-const LAB_DATES = ['Feb 2023','Jul 2023','Mar 2024','Oct 2024','Feb 2025','Jul 2025','Oct 2025','Dec 2025','May 2026','Jun 2026'];
+const LAB_DATES = ['Feb 2023','Jul 2023','Mar 2024','Oct 2024','Feb 2025','Jul 2025','Oct 2025','Dec 2025','May 2026','Jun 2026','Nov 2026'];
+function lim(x){return LAB_DATES.map(()=>x)}
 const LAB_RAW = [
   // Kidney
-  {t:'Urea',u:'mmol/L',v:[null,null,null,5.2,7.6,null,5.2,null,5.5,null],lo:2.8,hi:8.1,cat:'Kidney'},
-  {t:'Creatinine',u:'µmol/L',v:[null,null,111,112,88,null,91,null,107,null],lo:62,hi:110,cat:'Kidney'},
-  {t:'Uric Acid',u:'µmol/L',v:[409,null,314,316,422,null,322,null,383,null],lo:202,hi:420,cat:'Kidney'},
-  {t:'GFR CKD-EPI',u:'ml/s/1.73m²',v:[null,null,1.50,1.17,1.57,null,1.50,null,1.23,null],lo:1.0,hi:3.0,cat:'Kidney'},
+  {t:'Urea',u:'mmol/L',v:[null,null,null,5.2,7.6,null,5.2,null,5.5,null,5.3],lo:2.8,hi:8.1,cat:'Kidney'},
+  {t:'Creatinine',u:'µmol/L',v:[null,null,111,112,88,null,91,null,107,null,108],lo:62,hi:106,cat:'Kidney'},
+  {t:'Uric Acid',u:'µmol/L',v:[409,null,314,316,422,null,322,null,383,null,443],lo:202,hi:417,cat:'Kidney'},
+  {t:'GFR CKD-EPI',u:'ml/s/1.73m²',v:[null,null,1.50,1.17,1.57,null,1.50,null,1.23,null,1.21],lo:1.0,hi:3.0,cat:'Kidney'},
+  {t:'Urine ACR (albumin/creat.)',u:'g/mol',v:[null,null,null,null,null,null,null,null,null,null,0.2],lo:0,hi:2.5,cat:'Kidney'},
   // Electrolytes
-  {t:'Sodium',u:'mmol/L',v:[null,null,140,140,136,null,140,null,141,null],lo:136,hi:145,cat:'Electrolytes'},
-  {t:'Potassium',u:'mmol/L',v:[null,null,4.6,4.6,5.1,4.3,4.3,null,4.97,4.7],lo:3.5,hi:5.1,cat:'Electrolytes'},
-  {t:'Chloride',u:'mmol/L',v:[null,null,105,105,100,null,102,null,106,null],lo:97,hi:108,cat:'Electrolytes'},
-  {t:'Magnesium',u:'mmol/L',v:[null,null,null,null,null,null,null,null,0.96,null],lo:0.66,hi:1.07,cat:'Electrolytes'},
+  {t:'Sodium',u:'mmol/L',v:[null,null,140,140,136,null,140,null,141,null,141],lo:136,hi:145,cat:'Electrolytes'},
+  {t:'Potassium',u:'mmol/L',v:[null,null,4.6,4.6,5.1,4.3,4.3,null,4.97,4.7,4.3],lo:3.5,hi:5.1,cat:'Electrolytes'},
+  {t:'Chloride',u:'mmol/L',v:[null,null,105,105,100,null,102,null,106,null,103],lo:97,hi:108,cat:'Electrolytes'},
+  {t:'Magnesium',u:'mmol/L',v:[null,null,null,null,null,null,null,null,0.96,null,null],lo:0.66,hi:1.07,cat:'Electrolytes'},
   // Liver
-  {t:'Bilirubin Total',u:'µmol/L',v:[27.2,null,27.2,17.1,19.2,null,27.1,null,26.9,null],lo:0,hi:21,cat:'Liver'},
-  {t:'ALT',u:'µkat/L',v:[0.42,0.59,0.59,0.50,0.55,null,0.54,0.60,0.62,0.52],lo:0.10,hi:0.78,cat:'Liver'},
-  {t:'AST',u:'µkat/L',v:[0.40,0.56,0.56,1.08,0.58,null,0.66,0.52,0.58,0.47],lo:0.10,hi:0.72,cat:'Liver'},
-  {t:'GGT',u:'µkat/L',v:[0.47,null,0.47,0.32,0.33,null,0.48,null,0.43,null],lo:0.17,hi:1.19,cat:'Liver'},
-  {t:'ALP',u:'µkat/L',v:[1.53,null,1.53,1.50,1.69,null,1.64,null,1.64,null],lo:0.67,hi:2.28,cat:'Liver'},
+  {t:'Bilirubin Total',u:'µmol/L',v:[27.2,null,27.2,17.1,19.2,null,27.1,null,26.9,null,32.1],lo:0,hi:21,cat:'Liver'},
+  {t:'Bilirubin Conjugated',u:'µmol/L',v:[null,null,null,null,null,null,null,null,null,null,8.3],lo:0,hi:5.0,cat:'Liver'},
+  {t:'ALT',u:'µkat/L',v:[0.42,0.59,0.59,0.50,0.55,null,0.54,0.60,0.62,0.52,0.54],lo:0.10,hi:0.78,cat:'Liver'},
+  {t:'AST',u:'µkat/L',v:[0.40,0.56,0.56,1.08,0.58,null,0.66,0.52,0.58,0.47,0.45],lo:0.10,hi:0.72,cat:'Liver'},
+  {t:'GGT',u:'µkat/L',v:[0.47,null,0.47,0.32,0.33,null,0.48,null,0.43,null,0.59],lo:0.17,hi:1.19,cat:'Liver'},
+  {t:'ALP',u:'µkat/L',v:[1.53,null,1.53,1.50,1.69,null,1.64,null,1.64,null,1.58],lo:0.67,hi:2.28,cat:'Liver'},
+  {t:'FIB-4 index',u:'score',v:[null,null,null,null,null,null,null,null,null,0.70,0.72],lo:null,hi:1.30,cat:'Liver'},
+  {t:'Pancreatic Amylase',u:'µkat/L',v:[null,null,null,null,null,null,null,null,null,null,0.90],lo:0.22,hi:0.88,cat:'Pancreas'},
   // Lipids
-  {t:'Total Cholesterol',u:'mmol/L',v:[5.49,5.70,5.76,4.74,6.0,5.70,6.53,7.05,5.93,5.69],lo:2.9,hi:5.0,cat:'Lipids'},
-  {t:'HDL Cholesterol',u:'mmol/L',v:[1.44,1.13,1.43,1.29,1.38,null,1.43,1.14,1.24,1.29],lo:1.0,hi:2.1,cat:'Lipids'},
-  {t:'LDL Cholesterol',u:'mmol/L',v:[3.45,2.97,3.61,2.33,3.61,3.45,null,3.73,4.13,2.87],lo:1.2,hi:3.0,cat:'Lipids'},
-  {t:'Non-HDL Cholesterol',u:'mmol/L',v:[4.05,4.57,4.33,3.45,4.65,4.30,null,5.91,4.7,4.30],lo:null,hi:3.80,cat:'Lipids'},
-  {t:'Triglycerides',u:'mmol/L',v:[2.04,4.74,1.94,2.58,0.95,null,3.30,null,1.44,null],lo:0.45,hi:1.70,cat:'Lipids'},
-  {t:'Lp(a)',u:'nmol/L',v:[null,null,null,null,null,null,9.6,null,null,23.3],lo:0,hi:75,cat:'Lipids'},
-  {t:'Homocysteine',u:'µmol/L',v:[null,null,null,null,null,null,null,null,7.33,null],lo:5.40,hi:16.20,cat:'Lipids'},
+  {t:'Total Cholesterol',u:'mmol/L',v:[5.49,5.70,5.76,4.74,6.0,5.70,6.53,7.05,5.93,5.59,6.86],lo:2.9,hi:5.0,cat:'Lipids'},
+  {t:'HDL Cholesterol',u:'mmol/L',v:[1.44,1.13,1.43,1.29,1.38,null,1.43,1.14,1.24,1.29,1.55],lo:1.0,hi:2.1,cat:'Lipids'},
+  {t:'LDL Cholesterol',u:'mmol/L',v:[3.45,2.97,3.61,2.33,3.61,3.45,null,3.73,4.13,2.87,4.88],lo:1.2,hi:3.0,cat:'Lipids'},
+  {t:'Non-HDL Cholesterol',u:'mmol/L',v:[4.05,4.57,4.33,3.45,4.65,4.30,null,5.91,4.7,4.30,5.31],lo:null,hi:3.80,cat:'Lipids'},
+  {t:'Cholesterol/HDL ratio',u:'ratio',v:[null,null,null,null,null,null,null,null,null,4.33,4.43],lo:null,hi:4.20,cat:'Lipids'},
+  {t:'Triglycerides',u:'mmol/L',v:[2.04,4.74,1.94,2.58,0.95,null,3.30,3.76,1.44,null,1.75],lo:0.45,hi:1.70,cat:'Lipids'},
+  {t:'Lp(a)',u:'nmol/L',v:[null,null,null,null,null,null,null,9.6,null,23.3,12.4],lo:0,hi:75,cat:'Lipids'},
+  {t:'Homocysteine',u:'µmol/L',v:[null,null,null,null,null,null,null,10.1,7.33,null,10.1],lo:5.40,hi:16.20,cat:'Lipids'},
   // Metabolic
-  {t:'Glucose',u:'mmol/L',v:[null,null,4.7,4.7,4.3,null,4.4,null,4.31,4.4],lo:3.9,hi:5.6,cat:'Metabolic'},
-  {t:'HbA1c',u:'mmol/mol',v:[null,null,null,null,31,null,null,30,null,null],lo:20,hi:42,cat:'Metabolic'},
+  {t:'Glucose',u:'mmol/L',v:[null,null,4.7,4.7,4.3,null,4.4,null,4.31,4.4,4.4],lo:3.9,hi:5.6,cat:'Metabolic'},
+  {t:'HbA1c',u:'mmol/mol',v:[null,null,null,null,31,null,null,30,null,null,31],lo:20,hi:42,cat:'Metabolic'},
   // Vitamins
-  {t:'Vitamin D',u:'nmol/L',v:[null,null,105.0,105.0,88.9,null,91.8,75.5,97.4,null],lo:75,hi:125,cat:'Vitamins'},
-  {t:'Vitamin B12',u:'pmol/L',v:[null,null,882,882,null,null,842,891,745.7,null],lo:138,hi:652,cat:'Vitamins'},
-  {t:'Folate',u:'nmol/L',v:[null,null,16.9,16.9,null,null,19.1,16.8,27.6,26.6],lo:7.0,hi:70.2,cat:'Vitamins'},
+  {t:'Vitamin D',u:'nmol/L',v:[null,null,105.0,105.0,88.9,null,91.8,75.5,97.4,null,91.2],lo:75,hi:125,cat:'Vitamins'},
+  {t:'Vitamin B12',u:'pmol/L',v:[null,null,882,882,null,null,842,891,745.7,null,null],lo:138,hi:652,cat:'Vitamins'},
+  {t:'Folate',u:'nmol/L',v:[null,null,16.9,16.9,null,null,19.1,16.8,27.6,26.6,20.3],lo:7.0,hi:70.2,cat:'Vitamins'},
   // Inflammation
-  {t:'CRP',u:'mg/L',v:[null,null,null,1.2,3.0,null,1.2,0.7,4.2,null],lo:0,hi:5.0,cat:'Inflammation'},
-  {t:'hsCRP (CV risk)',u:'mg/L',v:[null,null,null,null,null,null,null,null,4.2,null],lo:0,hi:1.0,cat:'Inflammation'},
-  {t:'ESR',u:'mm/h',v:[null,null,null,7,7,null,7,null,null,null],lo:2,hi:28,cat:'Inflammation'},
+  {t:'CRP',u:'mg/L',v:[null,null,null,1.2,3.0,null,1.2,0.7,4.2,null,null],lo:0,hi:5.0,cat:'Inflammation'},
+  {t:'hsCRP (CV risk)',u:'mg/L',v:[null,null,null,null,null,null,null,null,4.2,null,null],lo:0,hi:1.0,cat:'Inflammation'},
+  {t:'ESR',u:'mm/h',v:[null,null,null,7,7,null,7,null,null,null,null],lo:2,hi:28,cat:'Inflammation'},
   // Blood Count
-  {t:'WBC',u:'10⁹/L',v:[null,null,6.5,6.5,6.4,null,7.5,7.5,5.2,8.1],lo:4.0,hi:10.0,cat:'Blood Count'},
-  {t:'RBC',u:'10¹²/L',v:[null,null,4.68,4.68,4.59,null,4.98,4.98,4.61,4.79],lo:4.00,hi:5.80,cat:'Blood Count'},
-  {t:'Hemoglobin',u:'g/L',v:[null,null,147,147,144,null,162,162,149,152],lo:135,hi:175,cat:'Blood Count'},
-  {t:'Hematocrit',u:'l/l',v:[null,null,0.436,0.436,0.428,null,0.462,0.462,0.446,0.446],lo:0.400,hi:0.500,cat:'Blood Count'},
-  {t:'MCV',u:'fl',v:[null,null,93.2,93.2,93.2,null,92.8,92.8,96.7,93.1],lo:82,hi:98,cat:'Blood Count'},
-  {t:'Platelets',u:'10⁹/L',v:[null,null,284,284,279,null,269,269,276,296],lo:150,hi:400,cat:'Blood Count'},
-  {t:'Neutrophils',u:'%',v:[null,null,42.4,42.4,59.2,null,56.1,56.1,null,55.3],lo:45,hi:70,cat:'Blood Count'},
-  {t:'Lymphocytes',u:'%',v:[null,null,48.1,48.1,32.2,null,34.6,34.6,null,35.7],lo:20,hi:45,cat:'Blood Count'},
+  {t:'WBC',u:'10⁹/L',v:[null,null,6.5,6.5,6.4,null,7.5,7.5,5.2,8.1,6.4],lo:4.0,hi:10.0,cat:'Blood Count'},
+  {t:'RBC',u:'10¹²/L',v:[null,null,4.68,4.68,4.59,null,4.98,4.98,4.61,4.79,4.74],lo:4.00,hi:5.80,cat:'Blood Count'},
+  {t:'Hemoglobin',u:'g/L',v:[null,null,147,147,144,null,162,162,149,152,149],lo:135,hi:175,cat:'Blood Count'},
+  {t:'Hematocrit',u:'l/l',v:[null,null,0.436,0.436,0.428,null,0.462,0.462,0.446,0.446,0.454],lo:0.400,hi:0.500,cat:'Blood Count'},
+  {t:'MCV',u:'fl',v:[null,null,93.2,93.2,93.2,null,92.8,92.8,96.7,93.1,95.8],lo:82,hi:98,cat:'Blood Count'},
+  {t:'Platelets',u:'10⁹/L',v:[null,null,284,284,279,null,269,269,276,296,278],lo:150,hi:400,cat:'Blood Count'},
+  {t:'Neutrophils',u:'%',v:[null,null,42.4,42.4,59.2,null,56.1,56.1,null,55.3,57.2],lo:45,hi:70,cat:'Blood Count'},
+  {t:'Lymphocytes',u:'%',v:[null,null,48.1,48.1,32.2,null,34.6,34.6,null,35.7,31.8],lo:20,hi:45,cat:'Blood Count'},
   // Iron
-  {t:'Iron (Fe)',u:'µmol/L',v:[null,null,null,null,null,null,null,null,15.4,null],lo:10.6,hi:28.3,cat:'Iron'},
-  {t:'Ferritin',u:'µg/L',v:[null,null,null,null,null,null,null,null,250.15,null],lo:21.80,hi:274.70,cat:'Iron'},
-  {t:'Transferrin',u:'g/L',v:[null,null,null,null,null,null,null,null,2.40,null],lo:2.00,hi:3.60,cat:'Iron'},
-  {t:'Transferrin Sat.',u:'%',v:[null,null,null,null,null,null,null,null,26,null],lo:20,hi:50,cat:'Iron'},
+  {t:'Iron (Fe)',u:'µmol/L',v:[null,null,null,null,null,null,null,null,15.4,null,33.0],lo:5.8,hi:34.5,cat:'Iron'},
+  {t:'Ferritin',u:'µg/L',v:[null,null,null,null,null,null,null,null,250.15,null,null],lo:21.80,hi:274.70,cat:'Iron'},
+  {t:'Transferrin',u:'g/L',v:[null,null,null,null,null,null,null,null,2.40,null,null],lo:2.00,hi:3.60,cat:'Iron'},
+  {t:'Transferrin Sat.',u:'%',v:[null,null,null,null,null,null,null,null,26,null,null],lo:20,hi:50,cat:'Iron'},
   // Hormones
-  {t:'TSH',u:'mU/L',v:[1.100,null,null,2.350,1.200,null,null,2.130,null,1.850],lo:0.270,hi:4.200,cat:'Hormones'},
-  {t:'PSA',u:'µg/L',v:[null,null,null,0.717,1.040,null,null,null,null,null],lo:0,hi:2.000,cat:'Hormones'},
-  {t:'Testosterone',u:'nmol/L',v:[null,null,null,20.70,null,null,null,22.10,24.29,null],lo:8.64,hi:29.00,cat:'Hormones'},
-  {t:'FSH',u:'U/L',v:[null,null,null,null,null,null,null,null,2.9,null],lo:1.0,hi:12.0,cat:'Hormones'},
-  {t:'LH',u:'U/L',v:[null,null,null,null,null,null,null,null,3.2,null],lo:0.6,hi:12.0,cat:'Hormones'},
-  {t:'SHBG',u:'nmol/L',v:[null,null,null,null,null,null,null,null,33.4,null],lo:17.0,hi:78.0,cat:'Hormones'},
-  {t:'Cortisol',u:'nmol/L',v:[null,null,null,null,null,null,null,437.0,364.3,null],lo:166,hi:507,cat:'Hormones'},
+  {t:'TSH',u:'mU/L',v:[1.100,null,null,2.350,1.200,null,null,2.130,null,1.850,2.46],lo:0.270,hi:4.200,cat:'Hormones'},
+  {t:'PSA',u:'µg/L',v:[null,null,null,0.717,1.040,null,null,null,null,null,null],lo:0,hi:2.000,cat:'Hormones'},
+  {t:'Testosterone',u:'nmol/L',v:[null,null,null,20.70,null,null,null,22.10,24.29,null,null],lo:8.64,hi:29.00,cat:'Hormones'},
+  {t:'FSH',u:'U/L',v:[null,null,null,null,null,null,null,null,2.9,null,null],lo:1.0,hi:12.0,cat:'Hormones'},
+  {t:'LH',u:'U/L',v:[null,null,null,null,null,null,null,null,3.2,null,null],lo:0.6,hi:12.0,cat:'Hormones'},
+  {t:'SHBG',u:'nmol/L',v:[null,null,null,null,null,null,null,null,33.4,null,null],lo:17.0,hi:78.0,cat:'Hormones'},
+  {t:'Cortisol',u:'nmol/L',v:[null,null,null,null,null,null,null,437.0,364.3,null,null],lo:166,hi:507,cat:'Hormones'},
   // Serology (EUC Laboratoře — Infekční serologie)
   // EBV: VCA IgG + EBNA IgG positive = past infection (normal in >90% adults). VCA IgM negative = no active EBV.
-  {t:'EBV VCA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,79.37],lo:0,hi:18.0,cat:'Serology'},
-  {t:'EBV VCA IgM',u:'index',v:[null,null,null,null,null,null,null,null,null,0.17],lo:0,hi:0.90,cat:'Serology'},
-  {t:'EBV EBNA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,68.57],lo:0,hi:18.0,cat:'Serology'},
-  {t:'EBV EA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,11.12],lo:0,hi:18.0,cat:'Serology'},
+  {t:'EBV VCA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,79.37,null],lo:0,hi:18.0,cat:'Serology'},
+  {t:'EBV VCA IgM',u:'index',v:[null,null,null,null,null,null,null,null,null,0.17,null],lo:0,hi:0.90,cat:'Serology'},
+  {t:'EBV EBNA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,68.57,null],lo:0,hi:18.0,cat:'Serology'},
+  {t:'EBV EA IgG',u:'U/mL',v:[null,null,null,null,null,null,null,null,null,11.12,null],lo:0,hi:18.0,cat:'Serology'},
   // Borrelia IgM persistently POSITIVE across all tests — lab note: "suspektní aktivní infekce"
-  {t:'Borrelia IgM',u:'U/mL',v:[null,null,25.01,26.96,null,null,null,34.06,null,30.28],lo:0,hi:16.0,cat:'Serology'},
-  {t:'Borrelia IgG',u:'U/mL',v:[null,null,0.81,1.31,null,null,null,0.47,null,0.42],lo:0,hi:18.0,cat:'Serology'},
+  // Nov 2026: Borrelia IgM/IgG re-requested; results arrived after the printout (GP reported all follow-up tests normal) — values not yet on file
+  {t:'Borrelia IgM',u:'U/mL',v:[null,null,25.01,26.96,null,null,null,34.06,null,30.28,null],lo:0,hi:16.0,cat:'Serology'},
+  {t:'Borrelia IgG',u:'U/mL',v:[null,null,0.81,1.31,null,null,null,0.47,null,0.42,null],lo:0,hi:18.0,cat:'Serology'},
 ];
 
 // ── MEDICATIONS & LIFESTYLE ────────────────────────────────────
 const MED_HISTORY = [
-  {name:'Lipanthyl (Fenofibrate)',dose:'145 mg',freq:'Daily',period:'Before 2024',status:'stopped',reason:'Lipid management (TG/Cholesterol)',
-   note:'Fibrate — lowers triglycerides and LDL, raises HDL. ⚠️ Notably, TG still spiked to 4.74 mmol/L in Jul 2023 WHILE on this medication, suggesting APOA5 genetic variant + alcohol overcame pharmacological control. Stopped 2024.'},
-  {name:'Finasteride',dose:'1 mg',freq:'Daily',period:'~Nov 2025 – present',status:'current',reason:'Androgenic alopecia (hair loss)',
-   note:'5α-reductase inhibitor — reduces DHT by ~70%. ⚠️ PSA lab values are artificially halved by finasteride — multiply measured PSA by 2 to estimate true level (Oct 2024: true PSA ~1.43; Feb 2025: ~2.08 — still normal but context matters). Explains the May 2026 FSH/LH/SHBG/Testosterone panel ordered to monitor hormonal status.'},
-  {name:'Revihair',dose:'1 capsule',freq:'Daily',period:'~Nov 2025 – present',status:'current',reason:'Hair loss nutritional support',
-   note:'Contains: L-cysteine 83mg, L-methionine 153mg, L-tyrosine 76mg, Biotin 100µg, Vit D3 500IU, Iron 3mg, Zinc 5mg, B6 7.5mg, Pantothenic acid 20mg. ✅ The 500IU D3 likely contributed to Vitamin D recovery (75.5→97.4 nmol/L Dec 2025→May 2026). Biotin 100µg/day is below the threshold that typically interferes with immunoassays (concern begins at ~5000µg), so lab interference is unlikely at this dose.'},
+  {name:'Lipanthyl (Fenofibrate)',dose:'145 mg',freq:'Daily',period:'Before 2024 – ~2024/25',status:'stopped',reason:'Lipid management (TG/Cholesterol)',
+   note:'Fibrate — lowers triglycerides and LDL, raises HDL. ⚠️ Notably, TG still spiked to 4.74 mmol/L in Jul 2023 WHILE on this medication, suggesting APOA5 genetic variant + alcohol overcame pharmacological control. Stopped 2024. 🔄 26 Nov 2026: after LDL 4.88 / TC 6.86, the GP suggested restarting it — decision pending. Gallbladder normal on the 26 Nov ultrasound.'},
+  {name:'Finasteride',dose:'1 mg',freq:'Daily',period:'~Nov 2025 – present (paused ~late Aug → 23 Nov 2026)',status:'current',reason:'Androgenic alopecia (hair loss)',
+   note:'5α-reductase inhibitor — reduces DHT by ~70%. ⚠️ PSA lab values are artificially halved by finasteride — multiply measured PSA by 2 to estimate true level (Oct 2024: true PSA ~1.43; Feb 2025: ~2.08 — still normal but context matters). Explains the May 2026 FSH/LH/SHBG/Testosterone panel ordered to monitor hormonal status. ⏸️ Paused ~3 months (late Aug → restarted week of 23 Nov 2026): a PSA drawn during or soon after the gap may not be halved, so don\'t apply ×2 blindly.'},
+  {name:'Revihair',dose:'1 capsule',freq:'Daily',period:'~Nov 2025 – present (paused ~late Sep → 23 Nov 2026)',status:'current',reason:'Hair loss nutritional support',
+   note:'Contains: L-cysteine 83mg, L-methionine 153mg, L-tyrosine 76mg, Biotin 100µg, Vit D3 500IU, Iron 3mg, Zinc 5mg, B6 7.5mg, Pantothenic acid 20mg. ✅ The 500IU D3 likely contributed to Vitamin D recovery (75.5→97.4 nmol/L Dec 2025→May 2026). Biotin 100µg/day is below the threshold that typically interferes with immunoassays (concern begins at ~5000µg), so lab interference is unlikely at this dose. ⏸️ Paused ~2 months (stomach upset, late Sep → restarted 23 Nov 2026); Vit D was still 91.2 on 24 Nov.'},
   {name:'Vitamin C',dose:'500–1000 mg',freq:'Daily',period:'2024 – present',status:'current',reason:'Antioxidant support',
    note:'Supports glutathione recycling — particularly relevant for GSTP1 +/- variant (reduced detox capacity). Good antioxidant complement to SOD2 +/+ weakness.'},
-  {name:'Magnesium',dose:'(supplement, form unspecified)',freq:'Daily',period:'2024 – present',status:'current',reason:'Muscle recovery, sleep, general health',
-   note:'✅ Serum magnesium 0.96 mmol/L (May 2026) is well within range — this supplementation is working. Magnesium also supports Vitamin D activation and BHMT pathway (methylation).'},
+  {name:'Magnesium',dose:'(supplement, form unspecified)',freq:'Daily',period:'2024 – present (paused ~late Sep → 23 Nov 2026)',status:'current',reason:'Muscle recovery, sleep, general health',
+   note:'✅ Serum magnesium 0.96 mmol/L (May 2026) is well within range — this supplementation is working. Magnesium also supports Vitamin D activation and BHMT pathway (methylation). ⏸️ Paused ~2 months (stomach upset, late Sep → restarted 23 Nov 2026).'},
   {name:'Creatine',dose:'(standard loading not specified)',freq:'Daily',period:'2024 – present',status:'current',reason:'Athletic performance, muscle recovery',
-   note:'⚠️ KEY LAB INTERPRETATION: Creatine supplementation increases creatinine production by ~10–30 µmol/L as a normal metabolic byproduct. Your creatinine (88–112 µmol/L) may appear borderline-high partly due to this — actual kidney filtration may be better than indicated. GFR may be mildly underestimated. This is reassuring context for the CKD-G2 staging.'},
+   note:'⚠️ KEY LAB INTERPRETATION: Creatine supplementation increases creatinine production by ~10–30 µmol/L as a normal metabolic byproduct. Your creatinine (88–112 µmol/L; 108 in Nov 2026) may appear borderline-high partly due to this — actual kidney filtration may be better than indicated. GFR may be mildly underestimated. This is reassuring context for the CKD-G2 staging.'},
   {name:'Extra Virgin Olive Oil',dose:'20–30 ml',freq:'Daily',period:'Ongoing',status:'current',reason:'Cardiovascular health, anti-inflammatory',
    note:'✅ Rich in oleic acid and polyphenols (oleocanthal is a natural COX inhibitor). Cardioprotective: supports HDL function, reduces LDL oxidation, lowers inflammatory markers. Good complementary habit for the lipid/inflammation profile.'},
 ];
 
 
 const HEALTH_EVENTS = [
+  {
+    date_start: '2026-11-10',
+    date_end:   '2026-11-26',
+    when:       '~mid Nov 2026 (5 days) + 2-day recurrence',
+    name:       'Diarrhoea episode (gastrointestinal)',
+    severity:   'Mild',
+    status:     'Resolved',
+    tests:      'Blood panel 24 Nov (pancreatic amylase 0.90, marginally high; glucose/HbA1c normal) · Urine normal, no bacteria · H. pylori / Campylobacter / Yersinia serology — reported normal by GP · Abdominal ultrasound 26 Nov — normal',
+    treatment:  'Symptomatic (fluids, bland diet) — no antibiotics',
+    notes:      'Diarrhoea 3–4×/day for ~5 days with mild cramping before bowel movements; no blood, fever or dehydration. A short 2-day recurrence followed, possibly from a sugar-free dairy snack (sweeteners) or a poorly sealed pre-cooked beetroot pack. Ultrasound ruled out pancreatic, gallbladder and liver causes.'
+  },
+  {
+    date_start: '2026-09-20',
+    date_end:   '2026-09-30',
+    when:       '~late Sep 2026',
+    name:       'Stomach upset',
+    severity:   'Mild',
+    status:     'Resolved',
+    tests:      'None',
+    treatment:  'Paused Magnesium and Revihair (restarted week of 23 Nov 2026)',
+    notes:      'Reported by Pablo on 24 Nov 2026; exact dates not recorded.'
+  },
   {
     date_start: '2026-09-13',
     date_end:   '2026-09-17',
@@ -1539,7 +1651,7 @@ const HABITS = [
              'ADH1B CC variant: alcohol metabolises more slowly — longer acetaldehyde exposure per drink than most people.']},
   {icon:'🚬',name:'Nicotine pouches',level:'high-risk',levelColor:'#ef4444',
    detail:'4mg nicotine pouches — ~2/day weekdays, more on weekends. No combustion.',
-   crossref:['Cardiovascular: nicotine acutely raises BP and heart rate, promotes platelet aggregation, and causes endothelial inflammation. Combined with LDL 4.13 + hsCRP 4.2 + SLCO1B1 statin risk, this is a significant composite cardiovascular risk multiplier.',
+   crossref:['Cardiovascular: nicotine acutely raises BP and heart rate, promotes platelet aggregation, and causes endothelial inflammation. Combined with LDL 4.88 + hsCRP 4.2 + SLCO1B1 statin risk, this is a significant composite cardiovascular risk multiplier.',
              'Inflammation: nicotine pouches have been shown to elevate hsCRP, hs-IL6, and other inflammatory markers even without combustion products. Likely contributor to 4.2 mg/L hsCRP.',
              'Note: pouches carry substantially less harm than smoking (no CO, no tar) but nicotine itself carries meaningful CV risk, especially in the context of already elevated lipids.',
              'Positive: no combustion means no impact on lung function or carbon monoxide-related RBC issues.']},
@@ -1561,6 +1673,9 @@ function labTab(sec,btn){
 }
 
 function rLabAnalysis(){
+  const li=LAB_DATES.length-1,fl=LAB_RAW.filter(r=>r.v[li]!==null&&flag(r.v[li],r.lo,r.hi)!=='ok');
+  document.getElementById('lab-flag-n').textContent=fl.length;
+  document.getElementById('lab-flag-list').textContent=fl.map(r=>r.t).join(', ');
   renderLabCharts();
   renderLabTable();
 }
@@ -1579,8 +1694,8 @@ function renderLabCharts(){
     {label:'Triglycerides',data:tg,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'HDL',data:hdl,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,spanGaps:true},
     {label:'LDL',data:ldl,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,spanGaps:true},
-    {label:'TC Limit',data:[5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0],borderColor:'rgba(239,68,68,.3)',borderDash:[6,4],pointRadius:0,fill:false},
-    {label:'TG Limit',data:[1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7,1.7],borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TC Limit',data:lim(5.0),borderColor:'rgba(239,68,68,.3)',borderDash:[6,4],pointRadius:0,fill:false},
+    {label:'TG Limit',data:lim(1.7),borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false},
   ]},options:{plugins:{legend:{display:false}},animation:false,scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:11}}}}}});
 
   // Liver chart
@@ -1606,8 +1721,8 @@ function renderLabCharts(){
   charts['vit']=new Chart(vitCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
     {label:'Vit D (nmol/L)',data:vd,borderColor:'#f59e0b',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
     {label:'B12 (pmol/L)',data:b12,borderColor:'#4f7ef8',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
-    {label:'Vit D min (75)',data:[75,75,75,75,75,75,75,75],borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
-    {label:'B12 max (652)',data:[652,652,652,652,652,652,652,652],borderColor:'rgba(79,126,248,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
+    {label:'Vit D min (75)',data:lim(75),borderColor:'rgba(245,158,11,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'B12 max (652)',data:lim(652),borderColor:'rgba(79,126,248,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y2'},
   ]},options:{plugins:{legend:{labels:{font:{size:10},boxWidth:10}}},animation:false,scales:{
     y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Vit D',font:{size:10}}},
     y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'B12',font:{size:10}}}
@@ -1622,7 +1737,7 @@ function renderLabCharts(){
   charts['kidney']=new Chart(kidCtx,{type:'line',data:{labels:LAB_DATES,datasets:[
     {label:'Creatinine (µmol/L)',data:creat,borderColor:'#10b981',tension:.3,fill:false,pointRadius:5,yAxisID:'y1',spanGaps:true},
     {label:'Uric Acid (µmol/L)',data:uric,borderColor:'#8b5cf6',tension:.3,fill:false,pointRadius:5,yAxisID:'y2',spanGaps:true},
-    {label:'Creat limit (110)',data:[110,110,110,110,110,110,110,110],borderColor:'rgba(16,185,129,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
+    {label:'Creat limit (106)',data:lim(106),borderColor:'rgba(16,185,129,.3)',borderDash:[6,4],pointRadius:0,fill:false,yAxisID:'y1'},
   ]},options:{plugins:{legend:{labels:{font:{size:10},boxWidth:10}}},animation:false,scales:{
     y1:{type:'linear',position:'left',grid:{color:'#f1f5f9'},title:{display:true,text:'Creatinine',font:{size:10}}},
     y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Uric Acid',font:{size:10}}}
@@ -1630,18 +1745,19 @@ function renderLabCharts(){
 }
 
 function renderLabTable(){
-  const cats=['Kidney','Electrolytes','Liver','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones'];
+  const cats=['Kidney','Electrolytes','Liver','Pancreas','Lipids','Metabolic','Vitamins','Inflammation','Blood Count','Iron','Hormones','Serology'];
   let html='';
   cats.forEach(cat=>{
     const rows=LAB_RAW.filter(r=>r.cat===cat);
-    html+=`<tr><td colspan="11" style="background:#f8fafc;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px">${cat}</td></tr>`;
+    if(!rows.length)return;
+    html+=`<tr><td colspan="${LAB_DATES.length+3}" style="background:#f8fafc;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px">${cat}</td></tr>`;
     rows.forEach(r=>{
-      const rangeStr=r.lo!==null?`${r.lo}–${r.hi}`:(r.hi!==null?`<${r.hi}`:'—');
+      const rangeStr=r.lo!==null&&r.hi!==null?`${r.lo}–${r.hi}`:(r.hi!==null?`<${r.hi}`:'—');
       const cells=r.v.map(val=>{
         if(val===null)return`<td style="color:#cbd5e1;text-align:center">—</td>`;
         const f=flag(val,r.lo,r.hi);
-        if(f==='H')return`<td style="text-align:center"><span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600">${val} H</span></td>`;
-        if(f==='L')return`<td style="text-align:center"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600">${val} L</span></td>`;
+        if(f==='H')return`<td style="text-align:center"><span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600;white-space:nowrap">${val} H</span></td>`;
+        if(f==='L')return`<td style="text-align:center"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600;white-space:nowrap">${val} L</span></td>`;
         return`<td style="text-align:center;color:var(--txt)">${val}</td>`;
       }).join('');
       html+=`<tr><td><strong>${r.t}</strong></td><td style="color:var(--muted);font-size:12px">${r.u}</td><td style="color:var(--muted);font-size:12px">${rangeStr}</td>${cells}</tr>`;
@@ -1709,49 +1825,46 @@ const DNA_FINDINGS = {
 };
 
 const RAW_INSIGHTS=[
-  {icon:'🦠',title:'Borrelia IgM Positive — Suspected Active Lyme Infection',priority:'critical',
-   lab:'Borrelia IgM: 30.28 U/mL (ref 0–16) — POSITIVE (Jun 2026). Lab comment: "Borrelia — suspektní aktivní infekce" (suspected active infection). Borrelia IgG: 0.47 U/mL (negative). WBC elevated: 8.1 × 10⁹/L (was 5.2 in May 2026). Total cholesterol: 5.93 (May 2026) → 5.69 (Jun 2026), mild decrease. WBC jumped 5.2→8.1 — consistent with active bacterial infection. Historical Borrelia IgM from prior tests also elevated (34.06, 26.96, 25.01 U/mL).',
-   dna:'No direct genetic factor for Borrelia susceptibility identified in your DNA panel. However: NAT2 slow acetylator genotype may affect antibiotic metabolism (doxycycline is standard Lyme treatment). GSTP1 and SOD2 variants mean your antioxidant response is already under load — bacterial infection adds further oxidative stress.',
-   insight:'This is the most urgent new finding. Borrelia burgdorferi (Lyme disease) IgM is significantly elevated and your own lab has flagged this as "suspected active infection." IgM positive without IgG seroconversion can indicate early or active infection. The persistent elevation across multiple tests (30.28 currently, history: 34.06, 26.96, 25.01) may reflect ongoing immune response. Clinical context supports this: WBC jumped from 5.2 → 8.1 (immune activation), WBC jumped 5.2→8.1 (immune activation). Borrelia IgM has been elevated in ALL 4 tests going back to Mar 2024: 25.01→26.96→34.06→30.28 — this is a chronic persistent pattern, not a new finding. You need a Western Blot (ELISA confirmation) and an infectious disease specialist referral urgently. Lyme is highly treatable if caught early — typically 3–6 weeks of doxycycline.',
-   actions:[
-     '🚨 See your doctor THIS WEEK — show them this lab result and the Borrelia suspektní aktivní infekce note',
-     'Request Western Blot (immunoblot) confirmation — the gold standard after positive IgM ELISA',
-     'Ask for referral to infectious disease specialist',
-     'Standard early Lyme treatment: doxycycline 100mg twice daily × 3–6 weeks (check with your doctor)',
-     'Note for antibiotics: NAT2 slow acetylator — inform your doctor of this if any drugs besides doxycycline are considered',
-     'Track symptoms: joint pain, fatigue, headaches, rash, brain fog — these support the diagnosis',
-     'Recheck Borrelia IgM and IgG 6–8 weeks after treatment to confirm clearance'
-   ]},
-  {icon:'❤️',title:'LDL All-Time High + Statin Risk Gene — Most Urgent',priority:'critical',
-   lab:'LDL: 4.13 mmol/L (May 2026) → 2.87 mmol/L (Jun 2026) — notable decrease. Total cholesterol: 5.93 (May 2026) → 5.69 (Jun 2026), slightly lower but still above 5.0 target. Dec 2025 cholesterol was 7.05 (all-time high). hsCRP 4.2 mg/L — above cardiovascular risk cut-off.',
-   dna:'SLCO1B1 rs4149056 CT = statin myopathy risk (*5 allele). HMGCR rs17238484 GT = reduced statin efficacy. APOA5 rs964184 CG = TG elevation gene. LPA rs3798220 CT = Lp(a) risk (not yet measured).',
-   insight:'This is the most critical finding across your entire health profile. LDL is at its highest recorded level at a time when your doctor may logically consider statins — but your SLCO1B1 *5 allele creates real myopathy risk, and HMGCR reduces their efficacy. This is not a reason to avoid treatment; it is a reason to pursue a pharmacogenomics-informed approach to lipid management.',
-   actions:['Discuss cardiovascular risk with your doctor urgently — bring this DNA finding','Specifically mention SLCO1B1 rs4149056 CT before any statin discussion','Request Lp(a) testing — you carry the LPA risk allele and it\'s not in standard panels','Marine omega-3 (EPA/DHA 2–4g/day) is evidence-based for both TG and inflammation','If statins are prescribed: rosuvastatin or pravastatin are safer choices than simvastatin/atorvastatin for your genotype']},
-  {icon:'🛡️',title:'Triglycerides Normalized — Maintain the Improvement',priority:'high',
-   lab:'Triglycerides: 1.94 → 2.58 → 0.95 → 3.30 → 1.44 mmol/L. Major improvement from Oct 2025 high.',
+  {icon:'❤️',title:'LDL Rebounded to 4.88 + Statin Risk Gene — Most Urgent',priority:'critical',
+   lab:'LDL: 2.33 (Oct 2024, on Lipanthyl) → 3.73 (Dec 2025) → 4.13 (May 2026) → 2.87 (Jun 2026) → <strong>4.88 mmol/L (Nov 2026)</strong> — highest recorded. Total cholesterol 6.86, non-HDL 5.31, cholesterol/HDL ratio 4.43. HDL 1.55 (good). TG 1.75. Lp(a) 12.4 nmol/L — low. hsCRP 4.2 mg/L (May 2026, not re-tested). Lab note: pre-analytical conditions not fully met on 24 Nov.',
+   dna:'SLCO1B1 rs4149056 CT = statin myopathy risk (*5 allele). HMGCR rs17238484 GT = reduced statin efficacy. APOA5 rs964184 CG = TG elevation gene. LPA rs3798220 CT = Lp(a) risk allele — but measured Lp(a) is low (9.6–23.3 nmol/L), so it is not expressed.',
+   insight:'This is the most important finding across your health profile. LDL swung back up after the June improvement, and is now at the level where a doctor would usually treat. On 26 Nov 2026 the GP suggested going back to Lipanthyl. Fenofibrate is a fibrate: it is strong on TG (and lowers uric acid) but has only a modest effect on LDL. Your SLCO1B1 *5 allele creates real statin myopathy risk, and HMGCR reduces statin efficacy — not a reason to avoid treatment, but a reason for a pharmacogenomics-informed choice.',
+   actions:['Discuss with your doctor whether fenofibrate alone is enough for an LDL of 4.88, or whether an LDL-specific drug without SLCO1B1 interaction (e.g. ezetimibe) should be added','Ask for a repeat fasting lipid panel to confirm the 24 Nov values (sampling conditions not fully met)','Mention SLCO1B1 rs4149056 CT before any statin discussion; if statins are prescribed, rosuvastatin or pravastatin are safer choices than simvastatin/atorvastatin for your genotype','Gallbladder normal on 26 Nov ultrasound — useful baseline, since fibrates can promote gallstones','Marine omega-3 (EPA/DHA 2–4g/day) is evidence-based for both TG and inflammation']},
+  {icon:'🦠',title:'Borrelia IgM — Persistent Low-Positive, Assessed as Serological Scar',priority:'medium',
+   lab:'Borrelia IgM: 25.01 (Mar 2024) → 26.96 (Oct 2024) → 34.06 (Dec 2025) → 30.28 U/mL (Jun 2026), ref 0–16. Borrelia IgG negative throughout (0.42–1.31). Re-requested 24 Nov 2026 together with H. pylori, Campylobacter and Yersinia serology; results came after the printout and the GP reported them as normal (values not yet on file). WBC back to 6.4 in Nov 2026.',
+   dna:'No direct genetic factor for Borrelia susceptibility identified. NAT2 slow acetylator genotype would only matter if antibiotics were ever prescribed.',
+   insight:'An IgM that stays low-positive for 2+ years without IgG seroconversion is not the pattern of an active, progressing Lyme infection. The doctor assessed it as a serological scar / normal immune reaction and decided no treatment is needed. The June lab comment ("suspected active infection") is an automatic flag on the value, not a diagnosis.',
+   actions:['No treatment — doctor\'s assessment','See a doctor if new symptoms appear: expanding red rash, swollen joints, facial palsy, persistent fever','Add the Nov 2026 Borrelia values here once the result sheet is available']},
+  {icon:'🛡️',title:'Triglycerides — Slightly Above Range Again (1.75)',priority:'high',
+   lab:'Triglycerides: 2.04 → 4.74 → 1.94 → 2.58 → 0.95 → 3.30 → 3.76 (Dec 2025) → 1.44 (May 2026) → 1.75 mmol/L (Nov 2026, limit 1.70). Much better than the 2025 peaks, but drifting up again.',
    dna:'APOA5 rs964184 CG = genetic TG predisposition. ADH1B CC = alcohol lingers longer. FADS1 GT = plant omega-3 doesn\'t convert to EPA/DHA.',
-   insight:'The triglyceride normalization is excellent. The volatile pattern (wide swings) reflects dietary/lifestyle triggers acting on a genetic predisposition. Your APOA5 variant means you are more TG-sensitive than the average person to carbohydrates and alcohol. Whatever changed between Oct 2025 and May 2026 — sustain it.',
-   actions:['Continue whatever dietary changes drove the improvement','Minimize alcohol (ADH1B means it lingers — directly spikes TG)','Use pre-formed marine omega-3, not plant ALA (FADS1 means plant sources don\'t convert)','Keep refined carbohydrates and sugar low — you are genetically TG-sensitive']},
+   insight:'The volatile pattern (wide swings) reflects dietary/lifestyle triggers acting on a genetic predisposition. Your APOA5 variant means you are more TG-sensitive than the average person to carbohydrates and alcohol. 1.75 is only marginally high, and the 24 Nov sample may not have been fully fasting. If Lipanthyl is restarted, TG is the marker it controls best.',
+   actions:['Repeat TG on a properly fasting sample','Minimize alcohol (ADH1B means it lingers — directly spikes TG)','Use pre-formed marine omega-3, not plant ALA (FADS1 means plant sources don\'t convert)','Keep refined carbohydrates and sugar low — you are genetically TG-sensitive']},
   {icon:'💊',title:'B12 Persistently Elevated — NOT From Supplements (Investigate)',priority:'high',
    lab:'B12: 882→882→842→891→745.7 pmol/L (range 138–652). Elevated at EVERY measurement over 2+ years. Now confirmed: no B12 supplementation. Homocysteine: 7.33 µmol/L — NORMAL.',
    dna:'MTRR A66G AG = reduced B12 recycling — B12 may pool in serum rather than enter cells efficiently. BHMT triple +/+ = methylation running on the betaine shortcut pathway.',
    insight:'⚠️ This finding is more significant now that supplementation is ruled out. Persistently high serum B12 without supplementation — across 5 separate tests over 2+ years — is endogenous. Most common causes: (1) Liver releasing stored B12 (Gilbert\'s pattern, recurrent bilirubin elevation); (2) MTRR variant causing B12 to pool in serum rather than enter methylation cycles; (3) Less commonly: myeloproliferative or solid-tumour disease. The GOOD news: homocysteine is 7.33 (normal), meaning B12 is functionally available for methylation — this makes a cellular deficiency unlikely. The declining trend (891→745.7) is also reassuring. Most likely explanation: liver B12 release + MTRR pooling, amplified by alcohol effects on hepatic B12 metabolism.',
    actions:['Tell your doctor you are NOT supplementing B12 — this changes the clinical picture significantly','Request LFT review specifically in context of elevated B12 + Gilbert\'s pattern','Monitor downward trend — retest in 6 months; if still >652 without supplementation, investigate further','Maintain betaine/choline-rich foods (BHMT support): eggs, beets, spinach, quinoa','Reduce alcohol — directly impairs hepatic B12 handling and BHMT function']},
   {icon:'☀️',title:'Vitamin D Recovered — Revihair D3 Is Working, Genetic Hits Require Ongoing Maintenance',priority:'medium',
-   lab:'Vitamin D: 105→105→88.9→91.8→75.5→97.4 nmol/L. Clear recovery since starting Revihair (Nov 2025). Low of 75.5 in Dec 2025 rose to 97.4 by May 2026.',
+   lab:'Vitamin D: 105→105→88.9→91.8→75.5→97.4→<strong>91.2 nmol/L (Nov 2026)</strong>. Clear recovery after starting Revihair (Nov 2025). The Nov value was drawn after ~2 months off Revihair (paused late Sep, restarted 23 Nov 2026) and is still in range.',
    dna:'CYP2R1 AG = reduced 25-hydroxylation efficiency. DHCR7 GT = reduced skin synthesis. VDR Bsm/Taq both +/- = reduced receptor efficiency. Three independent genetic hits on the Vitamin D system.',
    insight:'The recovery from 75.5 → 97.4 nmol/L is directly attributable to Revihair\'s 500 IU D3 daily (taken since ~Nov 2025 for hair loss). Note: 500 IU/day is a modest dose — your genetics require consistent supplementation to maintain adequate levels. With CYP2R1 reducing conversion, DHCR7 reducing skin synthesis, and dual VDR variants reducing receptor efficiency, your Vitamin D system is genetically inefficient at every step. If Revihair were stopped, levels would likely decline again within 3–6 months. The Vitamin A in Revihair (200µg, 25% RDI) is a low dose and does not pose toxicity risk at this level.',
-   actions:['Continue Revihair as your D3 source — the 500IU/day is clearly working for your genetics','Target 90–120 nmol/L (you\'re at 97.4 — good, but room to optimise)','Add 15–20 min midday sun exposure when possible for additional D3 and DHCR7 pathway support','Recheck Vitamin D annually — if it falls below 80 nmol/L consider adding a separate D3 supplement','Magnesium (0.96 mmol/L — normal) supports Vitamin D activation; continue magnesium supplementation']},
+   actions:['Keep Revihair going (restarted 23 Nov 2026) — the 500IU/day is clearly working for your genetics','Target 90–120 nmol/L (91.2 in Nov — at the low end of the target going into winter)','Add 15–20 min midday sun exposure when possible for additional D3 and DHCR7 pathway support','Recheck Vitamin D annually — if it falls below 80 nmol/L consider adding a separate D3 supplement','Magnesium (0.96 mmol/L — normal) supports Vitamin D activation; continue magnesium supplementation']},
   {icon:'🧬',title:'Homocysteine Normal — Methylation Network Working Despite Variants',priority:'medium',
-   lab:'Homocysteine 7.33 µmol/L (range 5.40–16.20) — first measurement. NORMAL.',
+   lab:'Homocysteine: 10.1 (Dec 2025) → 7.33 (May 2026) → 10.1 µmol/L (Nov 2026). All within range (5.4–16.2; EUC range 3.0–12.0).',
    dna:'BHMT triple +/+, CBS A360A +/+, MTRR A66G — all present. MTHFR C677T is NORMAL (protective).',
    insight:'Despite having multiple methylation variants, your homocysteine is comfortably within range. The key protective factor is MTHFR C677T being normal. Your body is compensating through the BHMT shortcut pathway (hence the betaine diet matters for you). This is reassuring — functional methylation is intact. The main vulnerability is that BHMT is stress-sensitive and alcohol-sensitive.',
    actions:['Continue eggs (choline), leafy greens (folate), and beets/quinoa (betaine)','Cortisol was 364 nmol/L (normal, down from 437) — stress management is working','Retest homocysteine annually to confirm ongoing compensation','Keep alcohol to a minimum — depletes betaine and impairs BHMT']},
   {icon:'🔥',title:'hsCRP Elevated — Genetics + Alcohol + Nicotine Create High CV Inflammation Risk',priority:'high',
    lab:'hsCRP: 4.2 mg/L (cardiovascular risk: >1.0 elevated; 3–10 mg/L = HIGH risk zone). Standard CRP also 4.2 (within 0–5 general range, but hsCRP cut-offs are stricter).',
    dna:'SOD2 A16V +/+ = impaired mitochondrial antioxidant defense → chronic low-level oxidative stress. GSTP1 dual +/- = reduced glutathione detox capacity. NAT2 slow acetylator = impaired chemical clearance.',
-   insight:'hsCRP 4.2 mg/L is a HIGH cardiovascular risk reading. Three independent factors are converging here: (1) SOD2 +/+ genetic background of elevated mitochondrial ROS; (2) Daily alcohol — directly elevates CRP via hepatic and gut inflammatory pathways, and your ADH1B CC variant means slower alcohol clearance and longer acetaldehyde exposure per drink; (3) Daily nicotine pouches — even without combustion, nicotine promotes endothelial inflammation and has been shown to elevate hsCRP independently. The combination of LDL 4.13 ↑ + hsCRP 4.2 ↑ + nicotine + SLCO1B1 statin risk is a serious composite cardiovascular risk cluster that warrants urgent lifestyle action and a frank conversation with your doctor.',
+   insight:'hsCRP 4.2 mg/L is a HIGH cardiovascular risk reading. Three independent factors are converging here: (1) SOD2 +/+ genetic background of elevated mitochondrial ROS; (2) Daily alcohol — directly elevates CRP via hepatic and gut inflammatory pathways, and your ADH1B CC variant means slower alcohol clearance and longer acetaldehyde exposure per drink; (3) Daily nicotine pouches — even without combustion, nicotine promotes endothelial inflammation and has been shown to elevate hsCRP independently. The combination of LDL 4.88 ↑ + hsCRP 4.2 ↑ + nicotine + SLCO1B1 statin risk is a serious composite cardiovascular risk cluster that warrants urgent lifestyle action and a frank conversation with your doctor.',
    actions:['🚬 Nicotine reduction is the highest-impact single change for this hsCRP — discuss NRT options with your doctor','🍺 Aim for alcohol-free weekdays — even 3 dry days/week meaningfully lowers CRP over months','CoQ10 supports SOD2 +/+ mitochondrial function — directly addresses the genetic ROS background','Marine omega-3 (EPA/DHA 2–4g/day) lowers both hsCRP and TG simultaneously','Retest hsCRP in 3–6 months — it should fall significantly with reduced alcohol/nicotine','Discuss composite cardiovascular risk with your doctor — hsCRP + LDL + statin gene + nicotine is urgent']},
+  {icon:'💧',title:'Uric Acid High (443) — Hydration, Beer and Protein',priority:'high',
+   lab:'Uric acid: 409 (Feb 2023) → 314 → 316 → 422 (Feb 2025, H) → 322 → 383 (May 2026) → <strong>443 µmol/L (Nov 2026, H; range 202–417)</strong> — highest recorded. Urine specific gravity 1.023 and urine creatinine 22.9 (top of range) suggest concentrated urine at sampling.',
+   dna:'Urate-transporter genes (e.g. SLC2A9, ABCG2) are not part of the current DNA review, so the genetic contribution is unknown. ADH1B CC (slower alcohol clearance) matters indirectly: alcohol, especially beer, raises uric acid.',
+   insight:'This is the first clearly high uric acid value. Likely contributors: low hydration on the day (concentrated urine), regular beer, and a high-protein training diet. It ties into the lipid picture: fenofibrate, if restarted, also lowers uric acid. High uric acid over time raises the risk of gout and kidney stones, so it is worth confirming on a repeat test.',
+   actions:['Drink more water, especially on training days and before blood tests','Cut beer first — it raises both uric acid and TG','Recheck uric acid with the repeat fasting lipid panel','Tell your doctor about any sudden painful, swollen joint (typically the big toe)']},
 ];
 
 function dnaTab(sec,btn){
@@ -1836,6 +1949,105 @@ function renderDnaInsights(){
 
 function rDnaAnalysis(){
   renderDnaCategory('cardiovascular');
+}
+
+const WEARABLE = {"start":"2025-01-01","end":"2026-11-25","cols":["steps","dist","kcal","flights","hr","rhr","sleep","deep","rem","awake","steady","speed","db"],"rows":[[21707,12.04,377,9,null,null,null,null,null,null,null,3.51,81.0],[8566,5.04,239,22,null,null,null,null,null,null,95,4.23,69.7],[17606,10.88,590,32,null,null,null,null,null,null,null,4.78,79.2],[7679,4.54,209,30,null,null,null,null,null,null,null,4.17,71.0],[16153,9.58,373,10,null,null,null,null,null,null,null,4.2,84.4],[3628,2.08,91,7,null,null,null,null,null,null,null,4.23,70.3],[7546,4.57,177,10,null,null,null,null,null,null,null,4.2,82.0],[5515,3.56,144,11,null,null,null,null,null,null,null,4.44,86.2],[9467,6.49,214,4,null,null,null,null,null,null,100,4.62,71.4],[9302,6.26,221,12,null,null,null,null,null,null,null,4.51,83.4],[7136,4.62,191,5,null,null,null,null,null,null,null,4.43,85.4],[4950,3.36,144,8,null,null,null,null,null,null,null,4.04,86.2],[7239,4.59,175,7,null,null,null,null,null,null,null,4.54,84.6],[5434,3.43,122,3,null,null,null,null,null,null,null,3.98,82.8],[1569,0.97,26,1,null,null,null,null,null,null,null,4.07,78.4],[9598,6.15,230,8,null,null,null,null,null,null,97,4.68,82.2],[9716,6.34,236,4,null,null,null,null,null,null,null,4.2,null],[13701,8.69,304,9,null,null,null,null,null,null,null,4.23,70.7],[8389,4.76,157,4,null,null,null,null,null,null,null,4.22,77.1],[3223,2.03,67,2,null,null,null,null,null,null,null,4.02,80.6],[3477,2.08,76,3,null,null,null,null,null,null,null,4.18,73.4],[6125,3.73,144,5,null,null,null,null,null,null,null,4.22,43.0],[7556,4.6,163,4,null,null,null,null,null,null,98,4.54,70.2],[6796,4.02,134,4,null,null,null,null,null,null,null,3.93,88.2],[18389,10.53,331,4,null,null,null,null,null,null,null,3.6,84.2],[9575,5.79,216,9,null,null,null,null,null,null,null,4.2,67.5],[5304,3.25,120,2,null,null,null,null,null,null,null,4.3,78.9],[7280,4.55,172,3,null,null,null,null,null,null,null,4.96,84.2],[7286,4.78,180,7,null,null,null,null,null,null,null,4.59,77.5],[7119,4.57,165,6,null,null,null,null,null,null,97,4.54,74.1],[2906,1.96,70,1,null,null,null,null,null,null,null,3.8,79.3],[6165,4.12,159,9,null,null,null,null,null,null,null,4.49,82.0],[8269,5.54,226,15,null,null,null,null,null,null,null,4.46,69.4],[8382,5.12,196,8,null,null,null,null,null,null,null,4.57,82.5],[4105,2.64,79,1,null,null,null,null,null,null,null,4.06,82.5],[8331,5.28,192,4,null,null,null,null,null,null,null,4.26,82.1],[5956,3.7,139,5,null,null,null,null,null,null,100,4.26,79.9],[3854,2.51,99,2,null,null,null,null,null,null,null,4.67,84.8],[9046,5.78,188,4,null,null,null,null,null,null,null,4.23,82.8],[5218,3.14,102,4,null,null,null,null,null,null,null,3.57,73.3],[6681,4.12,152,5,null,null,null,null,null,null,null,4.47,49.5],[3455,2.22,77,3,null,null,null,null,null,null,null,3.43,56.9],[2629,1.58,52,2,null,null,null,null,null,null,null,4.12,87.6],[4682,2.85,110,11,null,null,null,null,null,null,94,4.15,84.0],[4088,2.56,88,3,null,null,null,null,null,null,null,3.98,null],[10740,6.0,184,4,null,null,null,null,null,null,null,3.33,null],[5994,4.2,141,4,null,null,null,null,null,null,null,3.65,83.4],[4738,2.9,97,2,null,null,null,null,null,null,null,4.35,66.8],[7306,4.6,176,7,null,null,null,null,null,null,null,4.65,81.9],[9287,5.86,206,7,null,null,null,null,null,null,null,4.49,83.0],[5993,3.83,152,2,null,null,null,null,null,null,95,4.51,null],[3561,2.14,70,2,null,null,null,null,null,null,null,4.14,84.1],[22835,14.03,519,12,null,null,null,null,null,null,null,3.77,87.7],[6683,4.23,172,5,null,null,null,null,null,null,null,3.85,86.8],[2391,1.58,51,1,null,null,null,null,null,null,null,4.04,null],[10226,6.53,243,8,null,null,null,null,null,null,null,4.49,86.4],[10480,6.65,220,3,null,null,null,null,null,null,null,4.35,82.4],[5733,3.54,109,9,null,null,null,null,null,null,96,3.49,null],[7385,4.31,159,7,null,null,null,null,null,null,null,4.44,83.3],[11618,6.82,254,5,null,null,null,null,null,null,null,4.22,84.8],[9868,5.6,207,7,null,null,null,null,null,null,null,3.83,86.2],[2620,1.69,52,2,null,null,null,null,null,null,null,4.18,80.2],[4566,2.99,122,11,null,null,null,null,null,null,null,4.35,77.0],[5731,3.72,196,29,null,null,null,null,null,null,null,4.38,88.0],[4690,2.96,135,26,null,null,null,null,null,null,96,4.57,78.4],[12712,7.53,255,10,null,null,null,null,null,null,null,4.18,84.0],[34087,20.94,860,35,null,null,null,null,null,null,null,4.23,73.8],[36161,22.03,772,21,null,null,null,null,null,null,null,4.39,76.1],[5563,3.73,167,13,null,null,null,null,null,null,null,4.07,76.5],[5789,3.65,136,9,null,null,null,null,null,null,null,4.2,76.4],[7364,4.65,173,7,null,null,null,null,null,null,null,4.41,84.3],[2044,1.27,45,1,null,null,null,null,null,null,96,4.2,87.4],[2614,1.58,47,null,null,null,null,null,null,null,null,4.22,90.8],[11544,7.44,286,13,null,null,null,null,null,null,null,4.76,82.4],[13648,9.06,366,19,null,null,null,null,null,null,null,4.49,81.6],[6466,4.38,161,4,null,null,null,null,null,null,null,4.33,86.2],[6818,4.49,165,5,null,null,null,null,null,null,null,4.54,77.9],[5773,3.59,162,3,null,null,null,null,null,null,null,4.28,76.0],[7803,4.54,154,5,null,null,null,null,null,null,100,3.88,78.8],[7822,5.01,178,5,null,null,null,null,null,null,null,4.59,83.5],[11402,7.55,345,30,null,null,null,null,null,null,null,4.92,86.2],[10819,6.87,362,23,null,null,null,null,null,null,null,4.67,88.3],[6622,4.02,143,5,null,null,null,null,null,null,null,4.6,66.6],[2577,1.54,61,5,null,null,null,null,null,null,null,4.47,83.9],[5909,3.75,135,5,null,null,null,null,null,null,null,4.18,79.0],[5665,3.78,152,6,null,null,null,null,null,null,100,null,87.9],[3347,2.2,92,2,null,null,null,null,null,null,null,4.6,81.7],[8045,5.13,207,8,null,null,null,null,null,null,null,4.43,76.4],[6441,3.73,114,5,null,null,null,null,null,null,null,3.7,54.0],[2320,1.46,49,2,null,null,null,null,null,null,null,4.14,77.1],[9331,5.71,252,14,null,null,null,null,null,null,null,4.18,59.4],[21157,14.37,491,7,null,null,null,null,null,null,null,4.26,76.5],[8821,5.25,218,15,null,null,null,null,null,null,99,4.12,78.0],[7139,4.44,166,9,null,null,null,null,null,null,null,3.99,76.2],[10454,6.6,281,22,null,null,null,null,null,null,null,4.7,78.9],[8106,5.12,191,3,null,null,null,null,null,null,null,4.68,89.6],[3134,1.82,71,4,null,null,null,null,null,null,null,3.96,null],[6533,4.35,170,9,null,null,null,null,null,null,null,4.89,90.4],[3548,2.16,78,6,null,null,null,null,null,null,null,4.22,66.3],[4469,2.95,112,9,null,null,null,null,null,null,95,4.33,80.2],[3201,1.98,55,null,null,null,null,null,null,null,null,3.99,89.0],[13947,8.98,342,12,null,null,null,null,null,null,null,4.72,76.9],[18731,10.98,388,20,null,null,null,null,null,null,null,4.02,88.1],[3904,2.59,97,5,null,null,null,null,null,null,null,4.7,81.9],[7117,4.2,171,16,null,null,null,null,null,null,null,3.93,86.8],[5576,3.25,127,8,null,null,null,null,null,null,null,4.09,90.3],[5730,3.36,131,4,null,null,null,null,null,null,97,4.38,93.4],[7059,4.52,186,3,null,null,null,null,null,null,null,4.52,null],[9377,5.91,259,8,null,null,null,null,null,null,null,4.35,92.1],[15992,9.48,345,8,null,null,null,null,null,null,null,4.31,87.8],[5690,3.7,147,16,null,null,null,null,null,null,null,4.47,83.5],[3337,2.11,78,4,null,null,null,null,null,null,null,4.12,87.4],[11149,6.95,259,13,null,null,null,null,null,null,null,4.35,83.4],[20472,11.76,407,7,null,null,null,null,null,null,100,4.14,72.9],[20912,11.97,456,15,null,null,null,null,null,null,null,4.35,69.9],[27047,15.21,505,18,null,null,null,null,null,null,null,3.96,68.9],[13129,8.03,264,9,null,null,null,null,null,null,null,4.38,93.6],[6516,3.99,163,7,null,null,null,null,null,null,null,4.35,90.8],[6322,3.89,154,8,null,null,null,null,null,null,null,4.18,79.3],[10359,6.28,224,8,null,null,null,null,null,null,null,4.35,85.5],[13406,8.01,375,24,null,null,null,null,null,null,99,4.33,81.9],[3207,2.0,57,1,null,null,null,null,null,null,null,4.07,94.4],[17482,10.78,402,11,null,null,null,null,null,null,null,3.91,85.8],[9313,5.71,231,9,null,null,null,null,null,null,null,4.39,82.6],[5571,3.23,124,11,null,null,null,null,null,null,null,4.31,77.4],[8595,5.58,223,12,null,null,null,null,null,null,null,4.1,88.0],[9550,5.94,237,16,null,null,null,null,null,null,null,4.31,89.5],[5740,3.62,143,7,null,null,null,null,null,null,92,4.15,86.0],[6748,3.8,152,5,null,null,null,null,null,null,null,4.09,87.4],[13070,7.82,299,16,null,null,null,null,null,null,null,4.26,85.3],[12673,7.05,223,2,null,null,null,null,null,null,null,4.26,93.5],[7277,4.38,188,8,null,null,null,null,null,null,null,4.28,92.6],[6616,4.38,167,5,null,null,null,null,null,null,null,4.31,91.6],[7370,4.73,181,11,null,null,null,null,null,null,null,4.31,77.3],[10737,6.89,235,7,null,null,null,null,null,null,95,4.35,81.1],[11679,6.39,190,null,null,null,null,null,null,null,null,3.54,87.4],[16905,10.48,444,21,null,null,null,null,null,null,null,4.07,88.3],[6124,3.96,158,11,null,null,null,null,null,null,null,4.41,77.7],[6593,4.36,167,6,null,null,null,null,null,null,null,4.62,85.0],[6477,4.2,172,8,null,null,null,null,null,null,null,4.88,83.2],[10105,6.45,261,11,null,null,null,null,null,null,null,4.57,81.9],[4838,3.17,115,5,null,null,null,null,null,null,98,4.2,83.0],[25541,15.18,641,42,null,null,null,null,null,null,null,3.65,67.9],[31139,18.07,599,18,null,null,null,null,null,null,null,3.56,65.8],[33330,19.54,804,35,null,null,null,null,null,null,null,3.69,76.2],[10379,5.92,226,18,null,null,null,null,null,null,null,4.02,74.2],[9511,5.92,249,11,null,null,null,null,null,null,null,4.38,77.8],[3416,2.24,89,5,null,null,null,null,null,null,null,4.76,78.1],[10087,6.45,253,6,null,null,null,null,null,null,95,4.54,82.6],[16916,10.36,369,10,null,null,null,null,null,null,null,4.39,68.6],[14574,9.83,421,20,null,null,null,null,null,null,null,4.26,72.3],[6302,3.72,146,11,null,null,null,null,null,null,null,4.6,65.0],[4213,2.46,90,6,null,null,null,null,null,null,null,4.02,72.9],[12474,8.79,405,11,null,null,null,null,null,null,null,4.83,78.5],[4216,2.4,84,4,null,null,null,null,null,null,null,4.35,79.3],[4394,2.49,88,2,null,null,null,null,null,null,90,4.38,84.2],[9643,5.39,163,3,null,null,null,null,null,null,null,3.56,86.9],[19740,10.96,391,7,null,null,null,null,null,null,null,3.48,82.3],[4732,2.88,112,5,null,null,null,null,null,null,null,4.18,68.1],[7254,4.22,174,8,null,null,null,null,null,null,null,4.49,74.0],[7732,4.89,167,6,null,null,null,null,null,null,null,4.28,76.1],[16099,9.4,352,10,null,null,null,null,null,null,null,3.72,66.7],[25506,15.21,541,9,null,null,null,null,null,null,89,3.89,77.1],[14188,9.35,375,15,null,null,null,null,null,null,null,4.26,70.1],[16778,10.91,356,5,null,null,null,null,null,null,null,3.78,73.2],[39742,24.46,882,6,null,null,null,null,null,null,null,3.7,66.8],[8819,5.75,236,11,null,null,null,null,null,null,null,4.47,78.0],[6347,5.42,271,16,null,null,null,null,null,null,null,4.18,80.0],[5474,3.46,105,2,null,null,null,null,null,null,null,4.31,84.6],[7165,4.54,179,9,null,null,null,null,null,null,91,4.35,87.4],[10055,6.05,241,9,null,null,null,null,null,null,null,4.52,84.5],[13756,8.55,298,9,null,null,null,null,null,null,null,3.94,76.2],[10140,6.08,211,4,null,null,null,null,null,null,null,4.65,78.7],[702,0.47,8,null,null,null,null,null,null,null,null,3.07,null],[4323,2.59,98,5,null,null,null,null,null,null,null,4.17,82.7],[10541,7.27,326,15,null,null,null,null,null,null,null,4.09,69.0],[10373,6.71,221,8,null,null,null,null,null,null,94,4.54,null],[7987,4.75,144,3,null,null,null,null,null,null,null,4.14,85.9],[10648,6.53,211,4,null,null,null,null,null,null,null,4.14,84.3],[5151,3.3,126,8,null,null,null,null,null,null,null,4.44,76.3],[7757,5.1,220,10,null,null,null,null,null,null,null,4.36,85.5],[7287,4.84,190,6,null,null,null,null,null,null,null,4.18,86.7],[7386,4.72,167,7,null,null,null,null,null,null,null,4.04,72.4],[5095,3.36,127,5,null,null,null,null,null,null,97,4.44,83.7],[6727,4.25,127,null,null,null,null,null,null,null,null,4.1,87.8],[20485,12.57,430,8,null,null,null,null,null,null,null,4.07,79.9],[6776,4.06,157,4,null,null,null,null,null,null,null,4.09,81.3],[4622,3.06,118,5,null,null,null,null,null,null,null,4.73,84.8],[8261,5.07,198,12,null,null,null,null,null,null,null,4.25,82.3],[764,0.45,10,1,null,null,null,null,null,null,null,3.23,null],[6223,3.75,130,6,null,null,null,null,null,null,97,4.15,63.7],[4925,3.03,111,5,null,null,null,null,null,null,null,4.57,77.6],[21499,12.02,434,20,null,null,null,null,null,null,null,3.51,81.0],[14090,8.37,273,4,null,null,null,null,null,null,null,3.48,77.2],[4536,2.9,110,5,null,null,null,null,null,null,null,4.62,78.5],[5089,3.36,129,6,null,null,null,null,null,null,null,3.91,85.4],[3626,2.35,94,5,null,null,null,null,null,null,null,4.78,81.4],[4011,2.59,107,2,null,null,null,null,null,null,94,4.38,88.5],[7289,4.41,141,5,null,null,null,null,null,null,null,4.07,72.8],[8042,4.86,221,17,null,null,null,null,null,null,null,4.49,79.3],[12488,7.89,272,7,null,null,null,null,null,null,null,4.55,82.2],[4858,3.2,140,7,null,null,null,null,null,null,null,4.63,81.3],[2862,1.74,61,2,null,null,null,null,null,null,null,4.59,81.2],[8026,4.99,234,11,null,null,null,null,null,null,null,4.65,86.3],[6595,4.25,147,6,null,null,null,null,null,null,95,4.75,72.7],[5676,3.7,142,3,null,null,null,null,null,null,null,4.23,80.2],[8760,5.73,214,4,null,null,null,null,null,null,null,4.35,74.0],[9570,6.49,261,7,null,null,null,null,null,null,null,4.25,79.8],[4638,2.91,94,2,null,null,null,null,null,null,null,4.54,80.6],[7759,4.8,200,8,null,null,null,null,null,null,null,4.31,79.2],[6780,4.47,163,4,null,null,null,null,null,null,null,4.35,79.8],[8287,5.07,178,8,null,null,null,null,null,null,95,4.31,72.6],[2695,1.59,52,2,null,null,null,null,null,null,null,4.39,63.2],[14552,8.93,333,17,null,null,null,null,null,null,null,4.26,87.1],[14229,8.64,354,17,null,null,null,null,null,null,null,4.02,63.3],[6492,4.01,144,4,null,null,null,null,null,null,null,4.63,53.8],[6941,4.47,182,9,null,null,null,null,null,null,null,4.51,73.2],[5280,3.49,157,5,null,null,null,null,null,null,null,4.35,58.4],[2028,1.29,49,2,null,null,null,null,null,null,98,4.43,65.5],[9677,5.68,178,1,null,null,null,null,null,null,null,3.88,70.3],[23720,16.21,595,9,null,null,null,null,null,null,null,4.31,62.4],[5671,3.35,131,4,null,null,null,null,null,null,null,3.91,54.9],[7559,5.57,204,2,null,null,null,null,null,null,null,4.31,80.0],[7628,5.38,196,4,null,null,null,null,null,null,null,4.22,68.9],[17474,12.54,488,24,null,null,null,null,null,null,null,4.44,74.7],[18722,12.01,419,15,null,null,null,null,null,null,92,4.18,68.2],[25544,14.9,538,30,null,null,null,null,null,null,null,4.01,73.5],[22826,14.56,565,33,null,null,null,null,null,null,null,4.18,74.3],[21531,13.36,473,15,null,null,null,null,null,null,null,4.02,75.6],[14688,9.56,308,9,null,null,null,null,null,null,null,4.25,80.8],[15563,10.04,331,2,null,null,null,null,null,null,null,4.12,77.9],[17991,10.72,330,1,null,null,null,null,null,null,null,3.89,70.8],[19882,11.78,419,9,null,null,null,null,null,null,99,4.25,78.4],[26390,15.58,554,14,null,null,null,null,null,null,null,4.23,65.8],[7449,4.59,143,null,null,null,null,null,null,null,null,4.25,75.4],[8889,5.83,218,6,null,null,null,null,null,null,null,4.25,66.0],[19200,12.36,478,12,null,null,null,null,null,null,null,4.26,63.3],[8264,4.65,133,null,null,null,null,null,null,null,null,4.15,65.6],[21898,13.26,493,4,null,null,null,null,null,null,null,4.94,67.6],[9468,5.94,173,null,null,null,null,null,null,null,95,4.38,63.2],[21980,13.16,382,3,null,null,null,null,null,null,null,3.69,63.8],[32538,18.01,508,null,null,null,null,null,null,null,null,3.57,72.0],[21300,12.13,351,2,null,null,null,null,null,null,null,3.98,71.7],[14129,9.0,343,12,null,null,null,null,null,null,null,3.88,66.0],[19016,11.68,480,26,null,null,null,null,null,null,null,3.78,67.9],[11007,7.08,254,8,null,null,null,null,null,null,null,4.15,58.8],[7578,4.96,245,11,null,null,null,null,null,null,93,4.3,69.3],[18403,12.1,430,7,null,null,null,null,null,null,null,4.39,69.2],[32362,21.37,747,7,null,null,null,null,null,null,null,4.28,71.1],[13370,8.75,296,4,null,null,null,null,null,null,null,4.49,78.7],[21376,15.13,549,2,null,null,null,null,null,null,null,4.68,78.2],[9677,6.23,180,null,null,null,null,null,null,null,null,4.1,76.0],[5642,3.73,138,8,null,null,null,null,null,null,null,4.06,85.2],[3316,1.96,101,18,null,null,null,null,null,null,100,4.09,48.0],[3739,2.32,70,3,null,null,null,null,null,null,null,3.62,82.3],[11943,7.0,347,6,null,null,null,null,null,null,null,4.2,null],[3167,1.87,77,7,null,null,null,null,null,null,null,4.35,74.8],[7433,4.62,154,6,null,null,null,null,null,null,null,3.72,74.9],[6391,4.09,185,22,null,null,null,null,null,null,null,4.22,82.2],[4314,2.62,104,6,null,null,null,null,null,null,null,3.91,68.1],[6518,3.81,136,4,null,null,null,null,null,null,93,3.93,80.0],[5585,3.35,128,4,null,null,null,null,null,null,null,3.89,78.0],[17925,10.62,400,34,null,null,null,null,null,null,null,3.81,83.8],[15264,9.53,339,11,null,null,null,null,null,null,null,4.09,77.7],[1039,0.6,17,1,null,null,null,null,null,null,null,3.51,null],[10982,6.92,268,10,null,null,null,null,null,null,null,4.06,75.4],[4024,2.56,106,3,null,null,null,null,null,null,null,4.26,83.3],[4401,2.53,94,8,null,null,null,null,null,null,97,3.67,null],[6037,3.56,139,8,null,null,null,null,null,null,null,4.1,78.2],[11119,6.89,258,8,null,null,null,null,null,null,null,3.78,null],[5971,3.7,140,8,null,null,null,null,null,null,null,3.75,69.9],[6479,4.3,153,4,null,null,null,null,null,null,null,4.33,77.9],[8632,5.18,189,6,null,null,null,null,null,null,null,4.2,84.5],[5244,3.3,126,5,null,null,null,null,null,null,null,4.1,76.3],[4045,2.19,64,1,null,null,null,null,null,null,96,3.3,null],[4941,2.91,106,3,null,null,null,null,null,null,null,3.67,87.4],[5467,3.48,121,5,null,null,null,null,null,null,null,4.14,72.1],[6360,3.67,130,3,null,null,null,null,null,null,null,4.65,62.3],[4365,2.8,108,6,null,null,null,null,null,null,null,4.31,83.0],[11311,8.61,595,84,null,null,null,null,null,null,null,5.02,87.0],[8499,5.09,168,3,null,null,null,null,null,null,null,4.09,71.3],[6746,4.06,140,5,null,null,null,null,null,null,98,4.57,83.1],[6488,4.04,135,1,null,null,null,null,null,null,null,4.23,85.6],[4146,2.51,99,11,null,null,null,null,null,null,null,4.23,88.4],[8181,5.07,273,17,null,null,null,null,null,null,null,4.39,71.9],[6250,4.07,159,5,null,null,null,null,null,null,null,4.47,83.7],[4583,2.83,97,2,null,null,null,null,null,null,null,4.23,77.6],[6817,4.22,145,6,null,null,null,null,null,null,null,4.12,71.5],[5565,3.41,123,5,null,null,null,null,null,null,93,4.35,77.8],[15130,9.24,321,6,null,null,null,null,null,null,null,4.25,81.0],[19967,11.15,371,4,null,null,null,null,null,null,null,3.69,72.3],[5791,3.28,136,6,null,null,null,null,null,null,null,4.44,null],[9658,6.04,236,10,null,null,null,null,null,null,null,4.49,83.4],[5404,3.27,125,5,null,null,null,null,null,null,null,4.41,83.1],[4252,2.72,111,7,null,null,null,null,null,null,null,4.55,87.0],[8424,5.36,186,7,null,null,null,null,null,null,96,4.39,79.0],[8164,4.41,142,4,null,null,null,null,null,null,null,3.7,65.6],[24334,13.34,416,11,null,null,null,null,null,null,null,3.41,62.2],[4608,2.93,98,5,null,null,null,null,null,null,null,4.43,90.8],[591,0.35,5,null,null,null,null,null,null,null,null,2.99,null],[2571,1.53,55,4,null,null,null,null,null,null,null,4.41,73.8],[8798,5.78,255,20,null,null,null,null,null,null,null,4.55,78.2],[3650,2.32,90,5,null,null,null,null,null,null,97,4.43,83.6],[4427,2.86,108,3,null,null,null,null,null,null,null,4.12,74.7],[6812,4.39,191,8,null,null,null,null,null,null,null,3.83,76.7],[3858,2.3,67,2,null,null,null,null,null,null,null,4.52,78.3],[5475,3.32,130,5,null,null,null,null,null,null,null,4.41,87.0],[1768,1.16,47,1,null,null,null,null,null,null,null,4.02,68.9],[6321,3.83,130,7,null,null,null,null,null,null,null,4.35,77.3],[3703,2.03,74,2,null,null,null,null,null,null,99,4.14,80.0],[3212,2.17,62,null,null,null,null,null,null,null,null,4.01,77.6],[7857,4.72,198,3,null,null,null,null,null,null,null,4.44,70.6],[4819,3.32,135,6,null,null,null,null,null,null,null,4.63,88.8],[340,0.23,4,null,null,null,null,null,null,null,null,3.14,54.4],[4399,2.67,86,2,null,null,null,null,null,null,null,4.09,81.3],[11627,7.02,294,19,null,null,null,null,null,null,null,4.07,67.9],[19484,11.39,538,20,null,null,null,null,null,null,92,4.04,63.1],[6047,3.22,96,1,null,null,null,null,null,null,null,3.7,66.8],[7267,4.23,139,3,null,null,null,null,null,null,null,3.96,79.7],[18952,11.73,438,12,null,null,null,null,null,null,null,4.23,null],[8309,5.07,197,10,null,null,null,null,null,null,null,4.33,83.2],[3054,1.9,63,5,null,null,null,null,null,null,null,4.2,74.1],[6644,4.02,140,3,null,null,null,null,null,null,null,4.38,64.1],[8838,4.92,169,6,null,null,null,null,null,null,90,4.33,41.6],[11057,6.66,233,18,null,null,null,null,null,null,null,4.31,59.7],[41274,24.2,808,50,null,null,null,null,null,null,null,3.59,68.0],[32312,18.3,589,31,null,null,null,null,null,null,null,3.98,65.3],[7484,4.44,154,4,null,null,null,null,null,null,null,4.01,79.4],[3530,2.32,92,4,null,null,null,null,null,null,null,4.14,71.7],[4283,2.67,89,2,null,null,null,null,null,null,null,3.73,74.0],[5475,3.64,126,2,null,null,null,null,null,null,89,4.62,80.4],[8179,5.09,191,8,null,null,null,null,null,null,null,4.07,86.5],[7780,5.09,193,10,null,null,null,null,null,null,null,4.23,58.3],[8052,4.59,155,9,null,null,null,null,null,null,null,3.65,60.6],[6624,4.1,141,7,null,null,null,null,null,null,null,4.31,65.1],[5704,3.75,133,2,null,null,null,null,null,null,null,4.01,82.7],[707,0.43,9,null,null,null,null,null,null,null,null,2.9,54.4],[4251,2.95,116,4,null,null,null,null,null,null,92,4.15,72.7],[6508,4.14,139,7,null,null,null,null,null,null,null,4.35,85.3],[10891,7.08,284,19,null,null,null,null,null,null,null,4.23,78.2],[7805,5.07,196,18,null,null,null,null,null,null,null,4.31,86.8],[5308,3.51,128,9,null,null,null,null,null,null,null,4.47,81.7],[4398,2.9,114,5,null,null,null,null,null,null,null,4.26,89.2],[3615,2.3,99,3,null,null,null,null,null,null,null,4.38,75.4],[6879,4.68,201,4,null,null,null,null,null,null,96,4.68,75.6],[5323,3.15,103,3,null,null,null,null,null,null,null,4.31,73.7],[6446,3.86,120,6,null,null,null,null,null,null,null,4.04,78.6],[3151,1.96,63,4,null,null,null,null,null,null,null,3.8,64.7],[2665,1.66,60,2,null,null,null,null,null,null,null,4.18,48.3],[8278,5.42,228,6,null,null,null,null,null,null,null,4.67,72.0],[4656,2.98,95,6,null,null,null,null,null,null,null,4.28,70.8],[628,0.35,6,null,null,null,null,null,null,null,98,3.85,54.9],[2993,1.85,51,null,null,null,null,null,null,null,null,3.27,89.2],[7087,4.49,157,7,null,null,null,null,null,null,null,4.51,37.4],[4227,2.53,92,1,null,null,null,null,null,null,null,3.46,50.9],[3053,1.87,76,4,null,null,null,null,null,null,null,4.65,84.2],[9317,5.86,217,13,null,null,null,null,null,null,null,4.57,82.6],[3251,1.88,62,1,null,null,null,null,null,null,null,4.23,76.3],[11065,6.34,211,3,null,null,null,null,null,null,96,3.36,70.7],[4162,2.24,81,2,null,null,null,null,null,null,null,4.31,38.8],[7204,4.3,132,3,null,null,null,null,null,null,null,3.38,67.2],[5327,3.44,136,9,null,null,null,null,null,null,null,4.33,88.6],[6822,4.25,171,9,null,null,null,null,null,null,null,4.84,74.2],[6034,3.69,137,4,null,null,null,null,null,null,null,4.6,86.3],[5458,3.4,135,8,null,null,null,null,null,null,null,4.25,87.7],[2703,1.64,61,2,null,null,null,null,null,null,96,3.4,58.1],[8363,5.02,208,9,null,null,null,null,null,null,null,4.38,49.0],[11346,6.34,222,6,null,null,null,null,null,null,null,4.04,87.0],[10573,5.52,158,2,null,null,null,null,null,null,null,3.51,59.6],[5516,3.4,140,6,null,null,null,null,null,null,null,4.2,67.4],[4084,2.46,92,5,null,null,null,null,null,null,null,4.33,80.9],[2539,1.5,49,3,null,null,null,null,null,null,null,4.3,57.2],[3579,2.27,94,10,null,null,null,null,null,null,100,4.52,80.2],[8582,5.09,187,9,null,null,null,null,null,null,null,4.41,77.3],[11941,7.35,245,7,null,null,null,null,null,null,null,4.1,74.3],[8516,5.55,281,32,null,null,null,null,null,null,null,4.36,63.4],[7052,4.15,194,14,null,null,null,null,null,null,null,4.04,63.7],[8936,5.95,201,2,null,null,null,null,null,null,null,4.06,53.2],[5514,3.51,115,5,null,null,null,null,null,null,null,4.36,75.8],[5325,3.44,119,5,null,null,null,null,null,null,95,4.02,71.2],[5692,3.62,115,3,null,null,null,null,null,null,null,3.86,83.0],[9718,6.1,242,12,null,null,null,null,null,null,null,4.3,73.4],[21584,13.29,529,27,null,null,null,null,null,null,null,4.14,79.8],[7060,4.39,210,14,null,null,null,null,null,null,null,4.2,78.6],[6792,4.22,161,5,null,null,null,null,null,null,null,4.46,67.0],[5653,3.54,132,6,null,null,null,null,null,null,null,4.44,85.6],[8805,5.04,211,10,null,null,null,null,null,null,92,4.63,82.6],[3743,2.3,90,9,null,null,null,null,null,null,null,4.47,78.0],[8335,5.18,213,7,null,null,null,null,null,null,null,4.43,77.6],[6173,3.83,120,3,null,null,null,null,null,null,null,4.02,69.8],[110,0.08,1,null,null,null,null,null,null,null,null,null,53.4],[3935,2.32,88,4,null,null,null,null,null,null,null,3.67,72.8],[4637,2.82,117,6,null,null,null,null,null,null,null,4.81,79.5],[3804,2.33,94,5,null,null,null,null,null,null,98,4.49,50.9],[8294,5.1,210,6,null,null,null,null,null,null,null,4.28,76.4],[7646,4.62,177,7,null,null,null,null,null,null,null,4.23,83.8],[5672,3.43,121,2,null,null,null,null,null,null,null,3.85,46.5],[4132,2.56,98,4,null,null,null,null,null,null,null,4.06,81.1],[5901,3.54,134,9,null,null,null,null,null,null,null,4.7,80.7],[710,0.45,10,null,null,null,null,null,null,null,null,2.83,50.5],[4963,3.33,114,1,null,null,null,null,null,null,96,4.63,56.9],[8094,5.17,194,10,null,null,null,null,null,null,null,4.55,80.5],[7539,4.43,167,6,null,null,null,null,null,null,null,4.04,80.3],[5934,3.64,128,7,null,null,null,null,null,null,null,4.2,81.2],[3325,2.0,70,3,null,null,null,null,null,null,null,4.15,66.4],[2815,1.83,62,1,null,null,null,null,null,null,null,4.14,75.9],[10948,6.34,292,11,null,null,null,null,null,null,null,4.6,74.6],[5684,3.35,121,1,null,null,null,null,null,null,94,4.35,50.2],[6820,4.44,203,13,null,null,null,null,null,null,null,4.6,70.8],[16945,10.93,443,16,null,null,null,null,null,null,null,4.26,76.7],[20400,11.07,333,9,null,null,null,null,null,null,null,3.73,null],[3390,2.16,84,4,null,null,null,null,null,null,null,4.44,90.0],[3951,2.53,90,5,null,null,null,null,null,null,null,4.55,88.0],[4863,3.11,124,5,null,null,null,null,null,null,null,4.1,87.6],[7128,4.52,172,7,null,null,null,null,null,null,97,4.3,72.5],[8883,5.34,203,11,null,null,null,null,null,null,null,4.35,85.7],[18138,10.24,353,7,null,null,null,null,null,null,null,4.07,65.8],[3523,2.16,72,2,null,null,null,null,null,null,null,4.38,83.8],[9739,5.75,163,1,null,null,null,null,null,null,null,4.41,79.2],[4431,2.8,96,4,null,null,null,null,null,null,null,4.31,78.2],[1423,0.84,28,1,null,null,null,null,null,null,null,3.7,null],[5280,3.38,110,2,null,null,null,null,null,null,93,3.77,85.4],[5874,3.69,129,6,null,null,null,null,null,null,null,4.51,78.2],[12878,8.45,351,11,null,null,null,null,null,null,null,4.35,77.4],[13389,7.95,324,19,null,null,null,null,null,null,null,4.25,69.2],[3514,2.14,90,3,null,null,null,null,null,null,null,4.41,91.8],[9020,5.34,231,7,null,null,null,null,null,null,null,4.18,83.3],[5693,3.67,147,8,null,null,null,null,null,null,null,4.3,77.7],[6624,3.65,115,4,null,null,null,null,null,null,89,4.07,81.6],[11717,6.98,255,11,null,null,null,null,null,null,null,4.14,68.1],[9340,5.95,254,12,null,null,null,null,null,null,null,4.18,82.1],[8889,5.68,201,12,null,null,null,null,null,null,null,4.23,88.4],[11754,6.98,300,13,null,null,null,null,null,null,null,3.98,85.1],[9770,6.04,250,22,null,null,null,null,null,null,null,4.23,81.8],[4514,2.74,156,28,null,null,null,null,null,null,null,3.96,81.9],[6387,3.94,136,12,null,null,null,null,null,null,93,4.12,80.9],[12575,7.69,297,10,null,null,null,null,null,null,null,4.07,93.8],[9097,5.2,176,4,null,null,null,null,null,null,null,4.12,71.2],[5304,3.14,135,5,null,null,null,null,null,null,null,4.38,73.6],[2923,1.74,73,5,null,null,null,null,null,null,null,5.12,92.3],[11403,6.79,273,9,null,null,null,null,null,null,null,4.26,92.8],[7007,4.28,167,7,null,null,null,null,null,null,null,4.33,86.2],[5781,3.07,113,3,null,null,null,null,null,null,94,4.43,null],[6262,3.46,108,1,null,null,null,null,null,null,null,3.51,76.8],[8115,5.6,231,11,null,null,null,null,null,null,null,4.33,87.9],[687,0.43,14,1,null,null,null,null,null,null,null,4.86,64.3],[7270,4.33,208,18,null,null,null,null,null,null,null,4.49,74.9],[4693,3.15,107,2,null,null,null,null,null,null,null,4.52,66.1],[8479,5.54,211,10,null,null,null,null,null,null,null,4.51,89.2],[2642,1.56,57,8,null,null,null,null,null,null,95,4.2,74.7],[12996,7.56,295,16,null,null,null,null,null,null,null,4.41,76.4],[17597,9.38,263,null,null,null,null,null,null,null,null,3.6,84.8],[5521,3.06,92,1,null,null,null,null,null,null,null,4.07,44.9],[4702,2.85,127,6,null,null,null,null,null,null,null,4.43,82.9],[8315,4.75,174,5,null,null,null,null,null,null,null,4.36,73.5],[3029,1.64,51,1,null,null,null,null,null,null,null,4.18,89.6],[10359,6.53,247,7,null,null,null,null,null,null,95,4.3,88.1],[11133,6.34,211,8,null,null,null,null,null,null,null,4.04,91.4],[12697,6.92,187,3,null,null,null,null,null,null,null,3.57,null],[17472,11.51,431,18,null,null,null,null,null,null,null,4.07,83.2],[19192,10.94,369,9,null,null,null,null,null,null,null,3.27,61.9],[7169,4.17,158,5,null,null,null,null,null,null,null,4.41,85.5],[2230,1.29,43,1,null,null,null,null,null,null,null,4.35,68.9],[7881,4.72,152,7,null,null,null,null,null,null,96,4.22,82.2],[7901,4.73,164,5,null,null,null,null,null,null,null,3.99,76.9],[13767,7.81,253,5,null,null,null,null,null,null,null,3.89,72.0],[13784,7.87,250,4,null,null,null,null,null,null,null,4.01,67.7],[2852,1.67,65,5,null,null,null,null,null,null,null,4.09,89.6],[8337,5.17,180,2,null,null,null,null,null,null,null,4.51,76.6],[8567,5.65,210,18,null,null,null,null,null,null,null,4.86,86.2],[14598,8.9,323,13,null,null,null,null,null,null,97,4.39,75.6],[3834,2.33,94,2,null,null,null,null,null,null,null,4.46,64.6],[13936,9.17,378,31,null,null,null,null,null,null,null,4.26,93.3],[8543,5.01,167,6,null,null,null,null,null,null,null,3.64,51.0],[7086,4.62,181,11,null,null,null,null,null,null,null,4.26,79.6],[3700,2.32,77,4,null,null,null,null,null,null,null,3.88,74.2],[14249,9.45,372,10,null,null,null,null,null,null,null,4.43,69.4],[13051,7.85,394,43,null,null,null,null,null,null,94,4.43,69.1],[8698,4.84,209,8,null,null,null,null,null,null,null,4.04,64.6],[19362,11.57,385,9,null,null,null,null,null,null,null,4.06,82.0],[5526,3.15,109,4,null,null,null,null,null,null,null,4.18,68.9],[6895,4.25,150,7,null,null,null,null,null,null,null,4.2,80.4],[13318,7.64,300,18,null,null,null,null,null,null,null,4.28,58.1],[6550,4.02,149,10,null,null,null,null,null,null,null,4.52,58.5],[7072,4.67,195,7,null,null,null,null,null,null,96,4.8,81.1],[11876,7.45,245,10,null,null,null,null,null,null,null,4.36,78.1],[4124,2.61,83,2,null,null,null,null,null,null,null,3.56,71.5],[4245,2.88,122,5,null,null,null,null,null,null,null,4.2,65.9],[8886,6.13,269,13,null,null,null,null,null,null,null,4.33,72.6],[8059,5.2,213,7,null,null,null,null,null,null,null,4.36,74.7],[1905,1.17,28,null,null,null,null,null,null,null,null,3.06,76.2],[4282,2.98,119,5,null,null,null,null,null,null,97,4.26,66.3],[5810,3.54,108,1,null,null,null,null,null,null,null,3.52,84.8],[18665,10.2,345,4,null,null,null,null,null,null,null,3.77,61.2],[7016,4.44,158,5,null,null,null,null,null,null,null,4.15,55.5],[6303,4.41,179,8,null,null,null,null,null,null,null,4.47,70.9],[4543,2.8,119,7,null,null,null,null,null,null,null,4.39,73.8],[10027,6.16,243,13,null,null,null,null,null,null,null,4.25,84.8],[7591,4.26,158,1,null,null,null,null,null,null,99,4.23,72.4],[8590,5.52,201,5,null,null,null,null,null,null,null,4.49,77.2],[11162,9.77,446,7,null,null,null,null,null,null,null,4.51,67.6],[10498,6.05,212,10,null,null,null,null,null,null,null,4.22,67.0],[3468,3.43,184,7,null,null,null,null,null,null,null,4.38,78.2],[7896,5.55,218,6,null,null,null,null,null,null,null,4.28,75.6],[8631,5.44,239,17,null,null,null,null,null,null,null,4.51,83.8],[10572,8.21,376,17,null,null,null,null,null,null,100,4.91,75.8],[4444,2.61,72,1,null,null,null,null,null,null,null,3.94,39.0],[9935,6.02,199,6,null,null,null,null,null,null,null,4.04,null],[6331,3.62,142,5,null,null,null,null,null,null,null,3.99,46.5],[8998,6.2,319,12,null,null,null,null,null,null,null,4.55,51.7],[6202,4.18,158,7,null,null,null,null,null,null,null,4.57,81.0],[3433,1.98,75,1,null,null,null,null,null,null,null,4.14,47.6],[7181,4.51,162,6,null,null,null,null,null,null,100,4.33,63.9],[5843,3.8,135,2,null,null,null,null,null,null,null,3.94,58.9],[16186,10.01,346,8,null,null,null,null,null,null,null,4.04,63.8],[6769,4.51,156,4,null,null,null,null,null,null,null,4.31,66.7],[6552,4.49,183,7,null,null,null,null,null,null,null,4.62,81.2],[8327,5.95,265,11,null,null,null,null,null,null,null,4.8,70.8],[6301,4.26,179,8,null,null,null,null,null,null,null,4.51,71.1],[7198,5.13,227,9,null,null,null,null,null,null,100,4.62,84.6],[5025,3.2,125,5,null,null,null,null,null,null,null,4.36,64.7],[17464,9.7,284,12,null,null,null,null,null,null,null,3.56,61.2],[9886,5.6,166,5,null,null,null,null,null,null,null,3.3,73.4],[5991,3.67,152,6,null,null,null,null,null,null,null,4.73,54.1],[4772,2.85,105,5,null,null,null,null,null,null,null,4.33,76.4],[8020,4.52,167,4,null,null,null,null,null,null,null,3.98,61.3],[12140,7.61,305,18,null,null,null,null,null,null,97,4.46,85.2],[6760,4.35,152,2,null,null,null,null,null,null,null,4.31,83.3],[9720,6.5,228,13,null,null,null,null,null,null,null,4.1,77.6],[8455,4.92,256,29,null,null,null,null,null,null,null,3.56,59.7],[16922,10.94,395,10,null,null,null,null,null,null,null,4.25,76.3],[9269,5.28,193,5,null,null,null,null,null,null,null,4.06,67.7],[18759,12.41,502,17,null,null,null,null,null,null,null,4.38,42.8],[11164,6.74,240,18,null,null,null,null,null,null,95,4.12,47.8],[10896,6.39,261,26,null,null,null,null,null,null,null,3.86,60.1],[7987,4.57,143,8,null,null,null,null,null,null,null,3.69,79.4],[31275,17.43,530,26,null,null,null,null,null,null,null,3.41,57.4],[5592,3.49,109,9,null,null,null,null,null,null,null,3.99,51.3],[6994,4.15,207,24,null,null,null,null,null,null,null,3.69,61.7],[9508,6.39,238,12,null,null,null,null,null,null,null,4.33,78.3],[10083,6.65,253,8,null,null,null,null,null,null,92,4.46,77.5],[11788,7.63,341,29,null,null,null,null,null,null,null,4.26,70.3],[10217,6.61,237,8,null,null,null,null,null,null,null,4.31,72.7],[15045,8.85,288,6,null,null,null,null,null,null,null,3.81,62.8],[3602,2.16,83,6,null,null,null,null,null,null,null,4.38,81.1],[10928,7.37,288,13,null,null,null,null,null,null,null,4.3,79.6],[2868,1.93,90,5,null,null,null,null,null,null,null,4.41,64.6],[9040,6.02,264,13,null,null,null,null,null,null,95,4.72,48.6],[5658,3.62,124,4,null,null,null,null,null,null,null,4.68,82.9],[13856,8.08,287,4,null,null,null,null,null,null,null,4.18,74.5],[6248,3.85,133,1,null,null,null,null,null,null,null,4.28,75.7],[6240,4.01,158,5,null,null,null,null,null,null,null,4.6,81.6],[8279,5.99,255,11,null,null,null,null,null,null,null,4.7,46.4],[9699,6.81,261,12,null,null,null,null,null,null,null,4.46,78.8],[19918,11.76,390,9,null,null,null,null,null,null,99,3.72,61.8],[31647,19.18,605,12,null,null,null,null,null,null,null,4.54,null],[40553,23.69,734,2,null,null,null,null,null,null,null,3.69,52.5],[38464,23.69,809,5,null,null,null,null,null,null,null,3.91,68.7],[5501,3.41,119,4,null,null,null,null,null,null,null,4.33,65.2],[5158,3.09,117,5,null,null,null,null,null,null,null,4.2,59.5],[6931,4.33,170,12,null,null,null,null,null,null,null,4.55,83.4],[3481,1.96,67,1,null,null,null,null,null,null,100,3.91,72.6],[3818,2.59,83,1,null,null,null,null,null,null,null,4.1,null],[5461,3.65,128,1,null,null,null,null,null,null,null,4.3,66.0],[8188,5.02,195,9,null,null,null,null,null,null,null,4.14,73.1],[4709,2.61,104,3,null,null,null,null,null,null,null,4.65,59.8],[5424,3.73,136,6,null,null,null,null,null,null,null,4.12,49.2],[12802,11.83,631,53,null,null,null,null,null,null,null,4.72,79.8],[4166,2.75,106,6,null,null,null,null,null,null,98,4.35,70.1],[11190,6.63,241,8,null,null,null,null,null,null,null,4.33,60.8],[22406,12.75,377,4,null,null,null,null,null,null,null,3.56,59.0],[32398,19.31,673,27,null,null,null,null,null,null,null,3.8,58.4],[3676,2.22,74,2,null,null,null,null,null,null,null,4.36,78.9],[6862,4.59,171,2,null,null,null,null,null,null,null,5.28,50.5],[3777,2.61,95,5,null,null,null,null,null,null,null,4.84,75.9],[4852,3.03,108,3,null,null,null,null,null,null,99,4.04,61.6],[3361,2.11,81,4,null,null,null,null,null,null,null,4.89,86.0],[12091,8.21,329,10,null,null,null,null,null,null,null,4.36,78.7],[10934,7.03,302,25,null,null,null,null,null,null,null,4.6,73.7],[6848,4.47,166,7,null,null,null,null,null,null,null,4.35,70.3],[10920,7.07,283,16,null,null,null,null,null,null,null,4.36,79.1],[6836,4.51,174,4,null,null,null,null,null,null,null,4.15,76.5],[12590,7.47,269,6,null,null,null,null,null,null,100,4.52,68.1],[506,0.31,10,1,null,null,null,null,null,null,null,3.98,41.4],[2694,1.53,50,4,null,null,null,null,null,null,null,3.89,74.9],[25830,14.37,452,5,null,null,null,null,null,null,null,3.32,75.2],[8236,5.47,190,3,null,null,null,null,null,null,null,4.18,73.7],[5162,3.35,128,6,null,null,null,null,null,null,null,4.99,77.4],[7626,5.84,239,6,null,null,null,null,null,null,null,4.55,64.2],[5043,3.15,114,5,null,null,null,null,null,null,93,4.36,75.5],[7199,4.46,167,7,null,null,null,null,null,null,null,3.86,78.3],[8402,4.73,131,1,null,null,null,null,null,null,null,3.85,59.0],[13011,8.06,313,4,null,null,null,null,null,null,null,3.81,68.7],[7108,4.7,179,6,null,null,null,null,null,null,null,4.7,77.2],[5356,3.33,130,5,null,null,null,null,null,null,null,4.51,76.9],[3866,2.59,115,9,null,null,null,null,null,null,null,4.17,66.4],[5009,3.4,114,4,null,null,null,null,null,null,100,4.04,78.2],[3939,2.3,78,4,null,null,null,null,null,null,null,3.94,73.4],[13171,7.81,223,5,null,null,null,null,null,null,null,4.12,70.6],[4541,2.67,91,2,null,null,null,null,null,null,null,4.04,48.7],[11751,8.18,378,15,null,null,null,null,null,null,null,4.57,65.7],[14381,9.54,461,21,null,null,null,null,null,null,null,4.46,79.6],[3932,2.41,96,5,null,null,null,null,null,null,null,4.46,50.3],[6969,4.78,183,7,null,null,null,null,null,null,97,4.39,50.9],[5748,3.43,137,4,null,null,null,null,null,null,null,4.18,83.7],[20516,11.86,407,10,null,null,null,null,null,null,null,4.12,74.3],[10206,6.47,237,4,null,null,null,null,null,null,null,4.25,70.7],[3124,2.16,75,3,null,null,null,null,null,null,null,4.38,75.4],[11646,8.24,350,11,null,null,null,null,null,null,null,4.43,74.2],[4990,3.28,118,3,null,null,null,null,null,null,null,4.43,65.6],[3650,2.37,98,4,null,null,null,null,null,null,98,4.72,43.2],[4581,2.74,72,4,null,null,null,null,null,null,null,3.59,45.9],[7597,4.67,167,10,null,null,null,null,null,null,null,3.78,74.3],[4561,2.72,76,4,null,null,null,null,null,null,null,3.96,47.7],[6254,3.69,114,8,null,null,null,null,null,null,null,3.99,64.7],[10245,6.41,241,9,null,null,null,null,null,null,null,3.83,67.0],[6123,3.78,115,5,null,null,null,null,null,null,null,4.23,73.1],[5083,3.09,113,4,null,null,null,null,null,null,95,3.99,55.7],[10865,6.44,266,8,null,null,null,null,null,null,null,4.09,81.8],[15420,8.63,255,1,null,null,null,null,null,null,null,3.77,null],[16239,9.7,291,4,null,null,null,null,null,null,null,3.51,42.6],[1352,0.79,28,2,null,null,null,null,null,null,null,3.67,46.7],[7989,4.72,180,6,null,null,null,null,null,null,null,4.43,67.0],[1170,0.71,19,1,null,null,null,null,null,null,null,3.59,53.3],[9700,6.16,252,17,null,null,null,null,null,null,94,4.22,75.4],[13435,8.48,273,8,null,null,null,null,null,null,null,4.01,64.3],[23839,14.05,446,1,null,null,null,null,null,null,null,3.89,79.6],[17915,10.48,334,5,null,null,null,null,null,null,null,3.57,69.0],[739,0.48,9,null,null,69,null,null,null,null,null,2.93,39.2],[5957,4.14,172,10,80.8,61,7.18,0.85,1.87,0.35,null,4.6,74.3],[18791,12.96,296,12,77.8,61,7.78,1.07,1.8,0.32,null,4.51,75.0],[8715,6.08,144,12,71.1,60,7.9,0.72,2.35,0.05,97,4.1,62.9],[20408,14.1,244,11,80.0,60,8.0,1.07,1.95,0.25,null,4.52,77.7],[25704,17.73,373,9,88.8,63,3.83,0.97,0.22,1.55,null,4.51,66.9],[22436,16.53,250,7,98.1,61,8.33,0.67,2.23,0.1,null,3.57,42.9],[6263,4.35,74,2,69.4,59,8.2,1.23,1.78,0.1,null,4.63,48.5],[7769,5.38,87,2,71.8,60,9.13,0.9,2.03,0.03,null,3.88,74.1],[8148,5.62,168,6,73.6,62,7.92,1.32,1.5,0.12,null,4.31,65.9],[10614,7.34,198,8,75.5,62,8.03,1.2,1.9,0.77,96,4.26,81.1],[8692,6.04,151,3,73.3,62,7.95,1.58,1.73,0.17,null,4.07,42.3],[13733,9.43,217,8,81.2,61,10.77,0.65,2.85,0.67,null,4.22,44.7],[7366,5.15,113,2,66.8,62,8.43,0.82,1.92,0.33,null,4.54,49.9],[9877,6.81,136,6,69.7,60,7.67,0.88,1.25,0.38,null,4.25,73.2],[10548,7.32,159,7,72.1,60,7.92,0.93,1.87,0.17,null,4.26,76.4],[11917,8.22,202,2,69.9,59,7.48,1.33,1.45,0.6,null,4.2,63.1],[23420,15.47,421,11,84.6,61,4.07,1.13,0.68,0.23,87,3.99,81.6],[9225,6.39,122,8,79.6,63,7.28,1.4,2.05,0.97,null,3.83,77.1],[30819,21.42,445,6,85.8,65,4.0,0.8,0.75,0.47,null,3.88,76.2],[31656,22.16,623,25,84.4,62,9.82,0.77,2.27,0.43,null,3.8,49.4],[25396,17.4,589,12,72.3,63,7.97,0.93,1.78,0.12,null,4.35,83.5],[21941,15.06,412,9,73.6,61,5.43,0.47,0.82,0.08,null,4.18,65.5],[8728,6.05,122,5,72.2,59,8.82,1.22,1.75,0.18,null,4.25,75.6],[6721,4.65,96,5,73.3,60,6.97,0.92,2.02,0.18,94,4.46,72.7],[14987,10.43,60,2,78.4,61,8.1,1.35,2.0,0.2,null,3.19,71.7],[28525,20.15,388,8,97.2,64,6.5,1.2,1.45,0.3,null,3.48,66.1],[17451,12.59,200,3,84.8,62,7.5,1.25,1.62,0.22,null,3.83,56.2],[11134,7.71,153,6,68.6,59,7.9,1.05,1.68,0.08,null,4.3,73.1],[6678,4.67,83,5,69.8,60,7.83,1.13,2.0,0.1,null,4.7,82.8],[11675,8.1,167,11,78.4,61,8.53,0.87,2.07,0.17,null,4.39,62.7],[11195,7.74,178,3,77.7,61,7.5,1.33,1.95,0.13,95,4.25,74.4],[9038,6.29,111,4,79.8,64,5.38,1.22,0.58,0.4,null,3.93,80.6],[6927,4.84,5,null,83.3,61,7.5,0.65,2.08,0.15,null,3.67,89.8],[4424,2.83,112,null,68.2,null,6.17,1.35,1.57,0.27,null,4.68,73.5],[15318,7.79,305,11,87.6,null,8.92,0.55,2.15,0.3,null,4.33,63.7],[18318,8.85,321,11,79.6,62,4.23,0.57,0.18,2.45,null,4.31,80.9],[20473,4.67,132,3,null,null,8.35,0.87,1.47,0.32,null,3.3,52.5],[10337,3.96,159,8,83.0,62,7.65,0.85,1.85,0.15,94,4.62,81.7],[7010,3.67,136,6,76.6,63,null,null,null,null,null,4.14,56.1],[14533,7.68,296,4,79.9,65,6.87,0.9,2.17,0.12,null,4.28,81.5],[11429,4.43,200,18,86.3,null,7.7,1.27,2.02,0.03,null,4.04,58.0],[25675,13.81,603,31,86.9,null,7.35,0.62,1.67,0.02,null,4.17,60.0],[17331,8.74,307,6,78.4,null,5.72,1.25,0.97,0.33,null,4.2,68.7],[16109,7.15,279,4,90.0,null,8.63,1.53,1.82,0.32,null,4.39,66.8],[28164,14.24,470,6,87.0,null,10.25,0.7,2.23,1.57,91,4.01,74.5],[17242,7.35,221,4,83.6,null,6.85,0.92,1.83,0.08,null,3.54,59.7],[34469,20.66,603,3,72.3,null,null,null,null,null,null,3.65,64.6],[29649,18.02,558,9,null,null,null,null,null,null,null,3.73,60.2],[10651,6.76,270,16,null,null,null,null,null,null,null,4.06,60.1],[8461,5.57,188,5,null,null,null,null,null,null,null,4.17,57.0],[7221,4.59,173,8,null,null,null,null,null,null,null,4.46,69.8],[5324,3.46,136,4,91.9,67,6.9,0.77,1.82,0.15,93,4.67,76.7],[11681,4.09,161,7,88.6,64,7.18,0.87,1.68,0.08,null,4.43,79.4],[18307,6.45,236,10,85.8,67,0.48,0.0,0.0,0.17,null,4.33,73.3],[12159,3.88,155,10,103.8,68,6.53,0.82,1.62,0.2,null,4.02,70.3],[9319,4.02,173,5,77.1,65,7.95,1.1,2.4,0.03,null,4.23,68.8],[18169,7.89,337,30,83.0,66,7.78,1.03,1.75,0.98,null,4.31,81.5],[11760,4.88,228,12,77.1,66,7.0,0.82,1.18,0.13,null,null,74.4],[6735,4.09,160,1,76.3,66,6.23,1.07,1.6,0.15,null,4.18,66.3],[12477,5.63,222,13,78.6,65,9.55,1.18,2.52,0.05,null,4.46,74.3],[19410,7.23,291,13,88.0,67,8.45,1.32,1.67,0.17,null,3.94,79.8],[7016,0.61,19,1,86.6,69,6.17,0.47,1.73,0.35,null,3.4,63.3],[7054,2.46,107,5,69.8,67,6.9,0.95,1.53,0.13,null,4.43,72.1],[13279,6.0,282,12,69.1,65,null,null,null,null,null,4.57,72.7],[7528,5.02,217,10,72.6,62,7.62,1.1,1.93,0.35,null,4.68,69.3]],"monthly":[["2018-03",7641,null,null],["2018-04",10983,null,null],["2018-05",10886,null,null],["2018-06",12749,61.2,null],["2018-07",15106,null,null],["2018-08",10862,null,null],["2018-09",12217,null,null],["2018-10",18257,null,null],["2018-11",10348,null,null],["2018-12",9374,null,null],["2019-01",7569,null,null],["2019-02",15165,null,null],["2019-03",9905,null,null],["2019-04",10559,null,null],["2019-05",11043,null,null],["2019-06",12516,null,null],["2019-07",15311,null,null],["2019-08",13572,null,null],["2019-09",9528,null,null],["2019-10",11201,null,null],["2019-11",10112,null,null],["2019-12",10555,null,null],["2020-01",11130,null,null],["2020-02",12265,null,null],["2020-03",5827,null,null],["2020-04",5649,null,null],["2020-05",8427,null,null],["2020-06",12310,null,null],["2020-07",13546,null,null],["2020-08",7194,null,null],["2020-09",8630,null,null],["2020-10",8065,null,null],["2020-11",6833,null,null],["2020-12",6681,null,null],["2021-01",7536,null,null],["2021-02",12293,null,null],["2021-03",7480,null,null],["2021-04",9289,null,null],["2021-05",10124,null,null],["2021-06",9848,null,null],["2021-07",13083,null,null],["2021-08",11899,null,null],["2021-09",11040,null,null],["2021-10",11015,null,null],["2021-11",9336,null,null],["2021-12",8511,null,null],["2022-01",10533,null,null],["2022-02",10236,null,null],["2022-03",10008,null,12.41],["2022-04",15265,null,12.15],["2022-05",14916,null,11.6],["2022-06",17159,null,7.96],["2022-07",15132,null,7.78],["2022-08",14523,null,7.82],["2022-09",13698,null,7.56],["2022-10",13260,null,7.68],["2022-11",15386,null,7.3],["2022-12",13279,null,8.37],["2023-01",14299,null,null],["2023-02",13088,null,9.47],["2023-03",11444,null,6.55],["2023-04",13704,null,null],["2023-05",11764,null,null],["2023-06",12334,null,6.83],["2023-07",14434,null,null],["2023-08",11899,null,null],["2023-09",12558,null,null],["2023-10",8696,null,null],["2023-11",9219,null,null],["2023-12",8848,null,null],["2024-01",7341,null,null],["2024-02",7977,null,null],["2024-03",9997,null,null],["2024-04",10994,null,null],["2024-05",12014,null,null],["2024-06",14415,null,null],["2024-07",11968,null,null],["2024-08",10166,null,null],["2024-09",9893,null,null],["2024-10",11518,null,null],["2024-11",8464,null,null],["2024-12",9300,null,null],["2025-01",8385,null,null],["2025-02",6936,null,null],["2025-03",8660,null,null],["2025-04",9942,null,null],["2025-05",11451,null,null],["2025-06",10408,null,null],["2025-07",7517,null,null],["2025-08",14776,null,null],["2025-09",9895,null,null],["2025-10",7251,null,null],["2025-11",8940,null,null],["2025-12",5479,null,null],["2026-01",6985,null,null],["2026-02",7121,null,null],["2026-03",7806,null,null],["2026-04",9760,null,null],["2026-05",7725,null,null],["2026-06",10221,null,null],["2026-07",11182,null,null],["2026-08",8501,null,null],["2026-09",10253,61.6,7.59],["2026-10",14151,61.6,7.38],["2026-11",14665,66.0,7.12]]};
+
+// ── WEARABLE HELPERS ──────────────────────────────────────────
+const WR=(()=>{
+  const c={};WEARABLE.cols.forEach((k,i)=>c[k]=i);
+  const s=new Date(WEARABLE.start+'T12:00:00');
+  const dates=WEARABLE.rows.map((_,i)=>{const d=new Date(s);d.setDate(d.getDate()+i);return d.toISOString().split('T')[0]});
+  const col=k=>WEARABLE.rows.map(r=>r[c[k]]);
+  const sleep=col('sleep').map(v=>v!==null&&v<3?null:v); // <3 h = band not worn
+  const mask=(arr,ok)=>arr.map((v,i)=>ok[i]===null?null:v);
+  return {dates,steps:col('steps'),dist:col('dist'),kcal:col('kcal'),hr:col('hr'),rhr:col('rhr'),sleep,
+    deep:mask(col('deep'),sleep),rem:mask(col('rem'),sleep),awake:mask(col('awake'),sleep),steady:col('steady'),speed:col('speed'),n:dates.length};
+})();
+function wAvg(arr,from,to){const v=arr.slice(Math.max(0,from),to).filter(x=>x!==null&&x!==undefined);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
+function wLast(arr,days){return wAvg(arr,WR.n-days,WR.n)}
+function wIdx(date){return WR.dates.indexOf(date)}
+function wFmt(v,d=0){return v===null||v===undefined?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function wrTab(sec,btn){
+  document.querySelectorAll('.wr-sec').forEach(s=>s.style.display='none');
+  document.querySelectorAll('#page-wearable .tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('wr-'+sec).style.display='block';btn.classList.add('active');
+  rWearable(sec);
+}
+function wrStatTiles(){
+  const st7=wLast(WR.steps,7),st90=wLast(WR.steps,90),rhr7=wLast(WR.rhr,7),sl7=wLast(WR.sleep,7);
+  const rhrSO=wAvg(WR.rhr,wIdx('2026-09-01'),wIdx('2026-11-01'));
+  return [
+    {l:'Steps / day (7d)',v:wFmt(st7),u:'',i:'👟',b:`90-day avg ${wFmt(st90)}`,c:st7>=10000?'bg':st7>=7500?'bb':'by'},
+    {l:'Resting HR (7d)',v:wFmt(rhr7,1),u:'bpm',i:'❤️',b:rhrSO?`Sep–Oct avg ${wFmt(rhrSO,1)}`:'',c:rhr7&&rhrSO&&rhr7-rhrSO>3?'by':'bg'},
+    {l:'Sleep (7d)',v:wFmt(sl7,1),u:'h/night',i:'🌙',b:sl7>=7?'✓ On target':'Below 7 h',c:sl7>=7?'bg':'by'},
+    {l:'Deep + REM (7d)',v:wFmt((wLast(WR.deep,7)||0)+(wLast(WR.rem,7)||0),1),u:'h',i:'🧠',b:`Deep ${wFmt(wLast(WR.deep,7),1)} · REM ${wFmt(wLast(WR.rem,7),1)}`,c:'bb'},
+  ];
+}
+function tileHTML(s){return `<div class="sc"><div style="font-size:24px;margin-bottom:10px">${s.i}</div><div class="sl">${s.l}</div><div class="sv">${s.v} <span class="su">${s.u}</span></div>${s.b?`<span class="badge ${s.c}">${s.b}</span>`:''}</div>`}
+function rWearable(sec){
+  sec=sec||'activity';
+  document.getElementById('wr-sub').textContent=`Apple Health export — Zepp Life band (via Google Health) + iPhone · data through ${fd(WEARABLE.end)} ${WEARABLE.end.slice(0,4)}`;
+  document.getElementById('wr-stats').innerHTML=wrStatTiles().map(tileHTML).join('');
+  document.getElementById('wr-range').textContent=`Daily detail embedded: ${WEARABLE.start} → ${WEARABLE.end} · monthly averages since ${WEARABLE.monthly[0][0]}.`;
+  const opt=(extra={})=>({...chartDefaults,maintainAspectRatio:false,...extra});
+  if(sec==='activity'){
+    const n=90,d=WR.dates.slice(-n),st=WR.steps.slice(-n);
+    const ma=st.map((_,i)=>{const a=WR.steps.slice(WR.n-n+i-6,WR.n-n+i+1).filter(x=>x!==null);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null});
+    kc('wrS');charts['wrS']=new Chart(document.getElementById('wrStepChart'),{type:'bar',data:{labels:d.map(fd),datasets:[
+      {type:'line',label:'7-day avg',data:ma,borderColor:'#1e3a8a',pointRadius:0,tension:.3,fill:false,order:0},
+      {type:'line',label:'10k',data:d.map(()=>10000),borderColor:'rgba(16,185,129,.5)',borderDash:[5,5],pointRadius:0,fill:false,order:1},
+      {label:'Steps',data:st,backgroundColor:st.map(v=>v>=10000?'rgba(16,185,129,.55)':v>=7000?'rgba(79,126,248,.45)':'rgba(245,158,11,.55)'),borderRadius:3,order:2},
+    ]},options:opt({scales:{y:{grid:{color:'#f1f5f9'},beginAtZero:true},x:{ticks:{maxTicksLimit:12,font:{size:10}}}}})});
+    const M=WEARABLE.monthly;
+    kc('wrM');charts['wrM']=new Chart(document.getElementById('wrMonthChart'),{type:'bar',data:{labels:M.map(m=>m[0]),datasets:[{label:'Steps/day',data:M.map(m=>m[1]),backgroundColor:M.map(m=>m[0]>='2026-10'?'rgba(16,185,129,.75)':m[0]>='2025-01'?'rgba(79,126,248,.6)':'rgba(148,163,184,.5)'),borderRadius:3}]},options:opt({scales:{y:{grid:{color:'#f1f5f9'},beginAtZero:true},x:{ticks:{maxTicksLimit:10,font:{size:10}}}}})});
+    // comparison: same window one year earlier
+    const yr=(arr,days)=>{const end=wIdx(String(+WEARABLE.end.slice(0,4)-1)+WEARABLE.end.slice(4));return end<0?null:wAvg(arr,end-days+1,end+1)};
+    const rows=[['Steps / day',WR.steps,0],['Distance / day (km, iPhone)',WR.dist,1],['Active energy (kcal/day)',WR.kcal,0],['Walking speed (km/h)',WR.speed,1]];
+    document.getElementById('wr-compare').innerHTML=`<table class="dt"><thead><tr><th>Metric</th><th>7 d</th><th>30 d</th><th>90 d</th><th>Same 90 d last year</th></tr></thead><tbody>`+
+      rows.map(([l,a,dp])=>{const n90=wLast(a,90),p90=yr(a,90),chg=n90&&p90?Math.round((n90/p90-1)*100):null;
+        return `<tr><td><strong>${l}</strong></td><td>${wFmt(wLast(a,7),dp)}</td><td>${wFmt(wLast(a,30),dp)}</td><td>${wFmt(n90,dp)}</td><td>${wFmt(p90,dp)}${chg!==null?` <span style="color:${chg>=0?'#10b981':'#ef4444'};font-weight:700;font-size:11px">${chg>=0?'+':''}${chg}%</span>`:''}</td></tr>`}).join('')+`</tbody></table>`;
+    const kd=WR.kcal.slice(-n);
+    kc('wrK');charts['wrK']=new Chart(document.getElementById('wrKcalChart'),{type:'bar',data:{labels:d.map(fd),datasets:[{data:kd,backgroundColor:'rgba(245,158,11,.6)',borderRadius:3}]},options:opt({scales:{y:{grid:{color:'#f1f5f9'},beginAtZero:true},x:{ticks:{maxTicksLimit:8,font:{size:10}}}}})});
+    // gait: weekly steadiness + speed over the whole embedded window
+    const wk=[];for(let i=0;i<WR.n;i+=7){wk.push({d:WR.dates[i],s:wAvg(WR.steady,i,i+7),v:wAvg(WR.speed,i,i+7)})}
+    kc('wrG');charts['wrG']=new Chart(document.getElementById('wrGaitChart'),{type:'line',data:{labels:wk.map(w=>w.d.slice(0,7)),datasets:[
+      {label:'Steadiness %',data:wk.map(w=>w.s),borderColor:'#8b5cf6',pointRadius:3,spanGaps:true,yAxisID:'y1',tension:.3},
+      {label:'Speed km/h',data:wk.map(w=>w.v),borderColor:'#10b981',pointRadius:0,yAxisID:'y2',tension:.3},
+    ]},options:{maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}}},animation:false,scales:{y1:{position:'left',min:80,max:100,grid:{color:'#f1f5f9'}},y2:{position:'right',grid:{drawOnChartArea:false}},x:{ticks:{maxTicksLimit:8,font:{size:10}}}}}});
+    const lastSt=[...WR.steady].reverse().find(v=>v!==null);
+    document.getElementById('wr-gait-note').innerHTML=`Latest steadiness <strong>${lastSt??'—'}%</strong> · since Oct 2026 ${wFmt(Math.min(...WR.steady.slice(wIdx('2026-10-01')).filter(v=>v!==null)))}–${wFmt(Math.max(...WR.steady.slice(wIdx('2026-10-01')).filter(v=>v!==null)))}% · 2025 avg ${wFmt(wAvg(WR.steady,wIdx('2025-01-01'),wIdx('2026-01-01')),0)}%. Gait speed stable.`;
+  }
+  if(sec==='heart'){
+    const i0=WR.rhr.findIndex(v=>v!==null),d=WR.dates.slice(i0),r=WR.rhr.slice(i0),a=WR.hr.slice(i0);
+    const wkAvg=r.map((_,i)=>wAvg(r,i-6,i+1));
+    kc('wrH');charts['wrH']=new Chart(document.getElementById('wrHrChart'),{type:'line',data:{labels:d.map(fd),datasets:[
+      {label:'Resting',data:r,borderColor:'#ef4444',pointRadius:3,spanGaps:false,tension:.2},
+      {label:'Average',data:a,borderColor:'#f59e0b',pointRadius:2,spanGaps:false,tension:.2},
+      {label:'7d resting avg',data:wkAvg,borderColor:'#94a3b8',borderDash:[5,4],pointRadius:0,tension:.3},
+    ]},options:opt({scales:{y:{grid:{color:'#f1f5f9'}},x:{ticks:{maxTicksLimit:12,font:{size:10}}}}})});
+    const M=WEARABLE.monthly.filter(m=>m[2]!==null);
+    document.getElementById('wr-rhr-month').innerHTML=`<table class="dt"><thead><tr><th>Month</th><th>Resting HR</th><th>Sleep h</th><th>Steps/day</th></tr></thead><tbody>`+M.map(m=>`<tr><td>${m[0]}</td><td><strong>${wFmt(m[2],1)}</strong> bpm</td><td>${wFmt(m[3],1)}</td><td>${wFmt(m[1])}</td></tr>`).join('')+`</tbody></table>`;
+    const r14=WR.rhr.slice(-14).filter(v=>v!==null);
+    document.getElementById('wr-hr-note').innerHTML=`Resting HR rose from <strong>61.6 bpm</strong> (Sep–Oct) to <strong>${wFmt(wLast(WR.rhr,30),1)}</strong> over the last 30 days (last 14 days: ${Math.min(...r14)}–${Math.max(...r14)} bpm, latest ${r14[r14.length-1]}).<br><br>
+      Things that commonly raise it: short sleep, illness (diarrhoea episode mid-Nov), stress, alcohol, nicotine, dehydration and hard training late in the day. A rise of 4–5 bpm that lasts several weeks is worth mentioning to your doctor, together with the lipid results. Still within the normal adult range.`;
+  }
+  if(sec==='sleep'){
+    const n=30,d=WR.dates.slice(-n),dp=WR.deep.slice(-n),rm=WR.rem.slice(-n),sl=WR.sleep.slice(-n);
+    const lt=sl.map((v,i)=>v===null?null:Math.max(0,+(v-(dp[i]||0)-(rm[i]||0)).toFixed(2)));
+    kc('wrSl');charts['wrSl']=new Chart(document.getElementById('wrSleepChart'),{type:'bar',data:{labels:d.map(fd),datasets:[
+      {type:'line',label:'7 h',data:d.map(()=>7),borderColor:'rgba(79,126,248,.6)',borderDash:[5,5],pointRadius:0,fill:false},
+      {label:'Deep',data:dp,backgroundColor:'#1e3a8a',stack:'s'},
+      {label:'REM',data:rm,backgroundColor:'#8b5cf6',stack:'s'},
+      {label:'Light',data:lt,backgroundColor:'#93c5fd',stack:'s',borderRadius:3},
+    ]},options:opt({scales:{y:{stacked:true,min:0,max:11,grid:{color:'#f1f5f9'}},x:{stacked:true,ticks:{maxTicksLimit:15,font:{size:10}}}}})});
+    const valid=WR.sleep.slice(-30).filter(v=>v!==null),short=valid.filter(v=>v<6.5).length;
+    document.getElementById('wr-sleep-stats').innerHTML=[
+      {l:'Avg sleep (30 nights)',v:wFmt(wLast(WR.sleep,30),1),u:'h',i:'🌙',b:`${valid.length} nights recorded`,c:'bb'},
+      {l:'Deep / REM (30 nights)',v:`${wFmt(wLast(WR.deep,30),1)} / ${wFmt(wLast(WR.rem,30),1)}`,u:'h',i:'🧠',b:'Typical adult range',c:'bg'},
+      {l:'Short nights (<6.5 h)',v:short,u:`of ${valid.length}`,i:'⏰',b:short>5?'Watch consistency':'OK',c:short>5?'by':'bg'},
+    ].map(tileHTML).join('');
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────
